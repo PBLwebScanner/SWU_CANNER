@@ -12,7 +12,7 @@ visited_urls = set()
 
 def crawl_and_scan(base_url, options, depth=0, max_depth=3):
     if depth > max_depth or base_url in visited_urls:
-        return  # 최대 깊이를 초과하면 탐색을 중단&이미 검사한 url이면 검사 건너뜀
+        return [], [], []   # 최대 깊이를 초과하면 탐색을 중단&이미 검사한 url이면 검사 건너뜀
     
     visited_urls.add(base_url)
 
@@ -42,7 +42,7 @@ def crawl_and_scan(base_url, options, depth=0, max_depth=3):
             href = anchor.get("href")
             result = urljoin(base_url, href)
 
-            if result and result.startswith("http://testphp.vulnweb.com/"):
+            if result and result.startswith(base_url):
                 # links.append(result)
                 links.add(result)
 
@@ -107,18 +107,23 @@ def crawl_and_scan(base_url, options, depth=0, max_depth=3):
         for thread in threads:
             thread.join()
 
-        return all_xss_vulnerabilities,  all_sql_vulnerabilities, all_csrf_vulnerabilities
-
     except Exception as e:
         print(f"Error while crawling and scanning: {e}")
         return [], 0, [], 0, [], 0
+    
     finally:
-        # Selenium 웹 드라이버 종료
-        driver.quit()
 
         # 재귀 호출로 하위 링크 탐색
         for url in links:
-            crawl_and_scan(url, options, depth+1, max_depth)
+            sub_xss_vulns, sub_sql_vulns, sub_csrf_vulns = crawl_and_scan(url, options, depth+1, max_depth)
+            all_xss_vulnerabilities.extend(sub_xss_vulns)
+            all_sql_vulnerabilities.extend(sub_sql_vulns)
+            all_csrf_vulnerabilities.extend(sub_csrf_vulns)
+
+        # Selenium 웹 드라이버 종료
+        driver.quit()
+        
+        return all_xss_vulnerabilities, all_sql_vulnerabilities, all_csrf_vulnerabilities
     
 def no_crawl(base_url, options):
     all_directory_vulnerabilities = []
