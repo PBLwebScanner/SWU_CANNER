@@ -347,7 +347,7 @@ def form_detected(url, forms, payloads, session):
 def sql_injection_detection(url, vulnerabilities):
     logger.info("Starting SQL Injection detection...")
 
-    fname = "payload\sql.txt"
+    fname = "blog\payloads\sql.txt"
     with open(fname) as f:
         content = f.readlines()
     payloads = [x.strip() for x in content]
