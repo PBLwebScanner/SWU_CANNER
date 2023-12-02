@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SWU-CANNER REPORT</title>
+</head>
+<style>
+        
+    html, body {
+        height: 100%;
+        margin: 0;
+    }
+
+    body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f0f0f0;
+        color: #333;
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        align-items: center;
+        justify-content: center;
+    }
+
+    h1 {
+        text-align: center;
+        font-size: 30px;
+        font-weight: bold;
+        margin-top: 100px;
+    }
+
+
+    p {
+        font-size: 16px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    ul {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        text-align: center;
+    }
+
+    li {
+        margin-bottom: 5px;
+    }
+
+
+    form {
+        margin-top: 15px;
+        text-align: center;
+    }
+
+    label {
+        display: block;
+        margin-top: 70px;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    input[type="email"],
+    input[type="submit"],
+    button {
+        width: 50%;
+        padding: 10px;
+        margin-bottom: 10px;
+        box-sizing: border-box;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        text-align: center;
+    }
+
+    input[type="submit"],
+    button {
+        background-color: #587650;
+        color: white;
+        text-align: center;
+    }
+
+    input[type="submit"]:hover,
+    button:hover {
+        background-color: #587650;
+        text-align: center;
+    }
+    .center-button {
+        text-align: center;
+    }
+</style>
+<body>
+    <h1 style="text-align: center;">SWU-CANNER REPORT</h1>
+    <br>
+    <br>
+    <br>
+    <br>
+
+    <h2 style="text-align: center; text-decoration : underline;">스캔 상세정보</h2><br>
+    <table style="width: 80%; margin-left: auto; margin-right: auto;" border="2">
+        <tr>
+            <td style="width: 30%; text-align: center; font-weight : bold;">시작시간</td>
+            <td style="width: 70%;">&nbsp;&nbsp;&nbsp;&nbsp;{{ now2 }}</td>
+        </tr>
+    </table>
+    <br>
+
+    <!-- 표 출력 -->
+    <h2 style="text-align: center; text-decoration : underline;">분석 결과</h2><br>
+        <table style="width: 80%; margin-left: auto; margin-right: auto;" border="2">
+            <tr>
+                <th style="width: 30%; text-align: center; font-weight : bold;">질문</th>
+                <th style="width: 70%; text-align: center; font-weight : bold;">답변</th>
+            </tr>
+            {% for response in responses %}
+            <tr style="text-align: center;">
+                <td style="font-weight : bold;">{{ response.question }}</td>
+                <td style="text-align: left;">{{ response.answer }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+    <form method="post" action="{% url 'send_result_gpt' %}" onsubmit="return prepareData()">
+        {% csrf_token %}
+        <label for="email">이메일 입력</label>
+        <input type="email" name="email" id="email" class="email-input" required placeholder="이메일을 입력해주세요." value="{{ email|default:'' }}">
+        <button type="submit">결과 보고서 이메일로 보내기</button>
+    </form>
+    
+    <div class="center-button">
+        <a href="{% url 'download_result_gpt' %}">
+            <button>결과 보고서 다운로드</button>
+        </a>
+    </div>
+
+    <script>
+        function validateForm() {
+            var emailInput = document.getElementById('email').value;
+            if (!isValidEmail(emailInput)) {
+                alert("유효한 이메일 주소를 입력해주세요.");
+                return false;
+            }
+            return true;
+        }
+
+        function isValidEmail(email) {
+            // 이메일 유효성을 검사
+            var emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+            return emailPattern.test(email);
+        }
+    </script>
+
+</body>
+</html>

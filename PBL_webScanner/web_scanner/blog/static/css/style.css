@@ -1,0 +1,60 @@
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    flex-direction: column;
+    text-align: center;
+}
+
+h1 {
+    color: #333;
+    text-align: center;
+}
+
+.page-image {
+    width: 100%;
+    max-width: 1000px; /* Set a maximum width for the image */
+    height: auto;
+}
+
+.url-input {
+    width: 100%;
+    max-width: 400px;
+    padding: 15px 10px;
+    margin: 40px 0;
+}
+
+
+.checkbox-container {
+    text-align: left;
+    margin: 40px 0;
+}
+
+.checkbox-container input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+.button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 40px;
+    text-align: center;
+}
+
+.submit-button {
+    background-color: #587650;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+}

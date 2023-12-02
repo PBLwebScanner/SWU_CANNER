@@ -1,0 +1,531 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <link rel="stylesheet" href="style.css"> -->
+    <title>메인 페이지</title>
+    <!-- 이미지 추가 -->
+
+</head>
+<style>
+    html, body {
+        height: 100%;
+        margin: 0;
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f5f5f5;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: auto;
+        flex-direction: column;
+        text-align: center;
+    }
+
+    h1, h3 {
+        color: #333;
+        text-align: center;
+    }
+
+    .page-image {
+        width: 100%;
+        max-width: 1000px; /* Set a maximum width for the image */
+        height: auto;
+    }
+
+    .url-input {
+        width: 100%;
+        max-width: 400px;
+        padding: 15px 10px;
+        margin: 20px 40px 20px 40px;
+    }
+
+
+    .checkbox-container {
+        text-align: left;
+        margin: 40px 0;
+    }
+
+    .checkbox-container input[type="checkbox"] {
+        margin-right: 10px;
+    }
+
+    .button-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 40px;
+        text-align: center;
+    }
+
+    .submit-button {
+        background-color: #587650;
+        color: #fff;
+        padding: 10px 20px;
+        border: none;
+        cursor: pointer;
+        text-align: center;
+    }
+    
+    textarea{
+        width: 100%;
+        height: 300px;  
+        max-width: 500px;
+        padding: 15px 10px;
+        margin: 20px 40px 20px 40px;
+        resize: both;
+    }   
+    .hidden {
+        display: none;
+    }
+
+    .toggle-icon {
+        cursor: pointer;
+        width: 40px;  /* 이미지의 너비 설정 */
+        height: 20px; /* 이미지의 높이 설정 */
+    }
+
+
+    .question {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 5px;
+        text-align: left;
+    }
+
+    .radio-container {
+        display: flex;
+        align-items: center;
+        margin-left: auto;
+        justify-content: flex-end;
+    }
+
+    .radio-container label {
+        margin-left: 10px;
+    }
+
+    .sub-question {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 5px;
+        text-align: left;
+    }
+
+    .sub-question label {
+        margin-left: 10px;
+    }
+
+
+
+
+
+</style>
+
+<body>
+    <img src="{% static 'images/twitter_header_photo_3.png' %}" alt="Your Image" class="page-image" width="auto" height="auto" style="margin-top: 150px;" >
+
+    
+<!-- 체크리스트 구현 -->
+    <h1>URL 입력</h1>
+    <form method="post" action="{% url 'result_page' %}" onsubmit="return vul_validateForm();">
+        {% csrf_token %}
+        <!--<label for="url">URL:</label><br>-->
+        <input type="text" name="url" id="url" class="url-input" required placeholder="URL을 입력해주세요." value="{{ url }}">
+        <h3>
+            <img src="{% static 'images/nok-remove.png' %}" class="toggle-icon" onclick="toggleQuestions()" id="toggleIcon">
+            개인정보 관련 체크리스트
+        </h3>
+        <div id="questions" class="hidden">
+            <div class="question" style="margin-bottom: 5px; text-align: left;">
+                <label>1. 제24조에 따라 고유식별정보를 수집하였는가?</label>
+                <div class="radio-container">
+                    <input type="radio" name="infoCollection" value="yes" onclick="toggleSubQuestion('subQuestion1')">
+                    <label for="infoCollectionYes" style="margin-right: 10ox;">예</label>
+                    <input type="radio" name="infoCollection" value="no" onclick="resetSubQuestion('subQuestion1')">
+                    <label for="infoCollectionNo">아니오</label>
+                </div>
+            </div>
+            
+            <div id="subQuestion1" class="sub-question" style=" display: none; margin-bottom: 5px; text-align: left;">
+                <label>1-1. 암호화 등 안전성 확보에 필요한 조치를 하였는가?</label>
+                <div class="radio-container">
+                    <input type="radio" name="safetyMeasure" value="yes">
+                    <label for="safetyMeasureYes">예</label>
+                    <input type="radio" name="safetyMeasure" value="no">
+                    <label for="safetyMeasureNo">아니오</label><br>
+                </div>
+            </div>
+
+            <div class="question" style="margin-bottom: 5px; text-align: left;">
+                <label>2. 주민등록번호를 처리하는가?</label>
+                <div class="radio-container">
+                    <input type="radio" name="processResidentNumber" value="yes" onclick="toggleSubQuestion('subQuestion2');">
+                    <label for="processResidentNumberYes">예</label>
+                    <input type="radio" name="processResidentNumber" value="no" onclick="resetSubQuestion('subQuestion2');">
+                    <label for="processResidentNumberNo">아니오</label>
+                </div>
+                
+            </div>
+        
+            <div id="subQuestion2" class="sub-question" style="display: none; margin-bottom: 5px; text-align: left;">
+                <label>&nbsp;&nbsp;2-1. 제24조의2에 해당하는 경우인가?</label>
+                <div class="radio-container">
+                    <input type="radio" name="caseUnderArticle24_2" value="yes">
+                    <label for="caseUnderArticle24-2Yes">예</label>
+                    <input type="radio" name="caseUnderArticle24_2" value="no">
+                    <label for="caseUnderArticle24-2No">아니오</label><br>
+                </div>
+            
+                <label>&nbsp;&nbsp;2-2. 주민등록번호를 처리한다면, 암호화 조치 등을 하였는가?</label>
+                <div class="radio-container">
+                    <input type="radio" name="residentNumberEncryption" value="yes">
+                    <label for="residentNumberEncryptionYes">예</label>
+                    <input type="radio" name="residentNumberEncryption" value="no">
+                    <label for="residentNumberEncryptionNo">아니오</label><br>
+                </div>
+            
+                <label>&nbsp;&nbsp;2-3. 주민등록번호를 처리한다면, 주민등록번호를 사용하지 않고도 회원으로 가입할 수 있는가?</label>
+                <div class="radio-container">
+                    <input type="radio" name="allowMembershipWithoutResidentNumber" value="yes">
+                    <label for="allowMembershipWithoutResidentNumberYes">예</label>
+                    <input type="radio" name="allowMembershipWithoutResidentNumber" value="no">
+                    <label for="allowMembershipWithoutResidentNumberNo">아니오</label><br><br>
+                </div>
+            </div>
+            
+            <div class="question" style="margin-bottom: 5px; text-align: left;">
+                <label>3. 개인정보에 대한 접근 권한을 제한하기 위한 조치를 하였는가?</label>
+                <div class="radio-container">
+                    <input type="radio" name="accessLimit" value="yes">
+                    <label for="accessLimitYes">예</label>
+                    <input type="radio" name="accessLimit" value="no">
+                    <label for="accessLimitNo">아니오</label>
+                </div>
+            </div>
+            
+            <div class="question" style="margin-bottom: 5px; text-align: left;">
+                <label>4. 비밀번호의 일방향 암호화 저장 등 암호화 저장 또는 이에 상응하는 조치를 하였는가?</label>
+                <div class="radio-container">
+                    <input type="radio" name="passwordEncryption" value="yes">
+                    <label for="passwordEncryptionYes">예</label>
+                    <input type="radio" name="passwordEncryption" value="no">
+                    <label for="passwordEncryptionNo">아니오</label>
+                </div>
+            </div>
+            
+            <div class="question" style="margin-bottom: 5px; text-align: left;">
+                <label>5. 고유식별정보를 DMZ에 저장하는가?</label>
+                <div class="radio-container">
+                    <input type="radio" name="dmzStorage" value="yes" onclick="toggleSubQuestion('subQuestion5')">
+                    <label for="dmzStorageYes">예</label>
+                    <input type="radio" name="dmzStorage" value="no" onclick="resetSubQuestion('subQuestion5')">
+                    <label for="dmzStorageNo">아니오</label>
+                </div>
+            </div>
+            
+            <div id="subQuestion5" class="sub-question" style=" display: none; margin-bottom: 5px; text-align: left;">
+                <label>&nbsp;&nbsp;5-1. 암호화하였는가?</label>
+                <div class="radio-container">
+                    <input type="radio" name="dmzEncrypt" value="yes">
+                    <label for="dmzEncryptYes">예</label>
+                    <input type="radio" name="dmzEncrypt" value="no">
+                    <label for="dmzEncryptNo">아니오</label><br><br>
+                </div>
+            </div>
+            
+            <div class="question" style="margin-bottom: 5px; text-align: left;">
+                <label>6. 내부망에 고유식별정보를 저장하였는가?</label>
+                <div class="radio-container">
+                    <input type="radio" name="internalNetwork" value="yes" onclick="toggleSubQuestion('subQuestion6')">
+                    <label for="internalNetworkYes">예</label>
+                    <input type="radio" name="internalNetwork" value="no" onclick="resetSubQuestion('subQuestion6')">
+                    <label for="internalNetworkNo">아니오</label>
+                </div>
+            </div>
+            
+            <div id="subQuestion6" class="sub-question" style=" display: none;margin-bottom: 5px; text-align: left;">
+                <label>&nbsp;&nbsp;6-1. 암호화하였는가?</label>
+                <div class="radio-container">
+                    <input type="radio" name="internalEncrypt" value="yes">
+                    <label for="internalEncryptYes">예</label>
+                    <input type="radio" name="internalEncrypt" value="no">
+                    <label for="internalEncryptNo">아니오</label><br>
+                </div>
+            
+                <label>&nbsp;&nbsp;6-2. 암호화하지 않은 경우 위험도 분석에 따른 결과, 영향평가의 결과에 부합하는가?</label>
+                <div class="radio-container">
+                    <input type="radio" name="riskAnalysis" value="yes">
+                    <label for="riskAnalysisYes">예</label>
+                    <input type="radio" name="riskAnalysis" value="no">
+                    <label for="riskAnalysisNo">아니오</label><br><br>
+                </div>
+            </div>
+            <div class="question" style="margin-bottom: 5px; text-align: left;">
+                <label>7. 위험도 산정 계산을 위한 질문입니다. (default = 1)</label>
+                <div class="radio-container">
+                    <input type="radio" name="riskCalculation" value="yes" onclick="toggleSubQuestion('subQuestion7')">
+                    <label for="riskCalculationYes">확인</label>
+                </div>
+            </div>
+            
+            <div id="subQuestion7" class="sub-question" style="display: none; margin-bottom: 5px; text-align: left;">
+                <label>&nbsp;&nbsp;7-1. 아래의 정보를 처리하는가?</label><br>
+                &nbsp;&nbsp;&nbsp;<img src="{% static 'images/vul_1.png' %}" class="vul"><br>
+                <div class="radio-container">
+                    <input type="radio" name="caseUnderArticle71" value="yes">
+                    <label for="caseUnderArticle71Yes">예</label>
+                    <input type="radio" name="caseUnderArticle71" value="no">
+                    <label for="caseUnderArticle71No">아니오</label><br><br>
+                </div>
+            
+                <label>&nbsp;&nbsp;7-2. 아래의 정보를 처리하는가?</label><br>
+                &nbsp;&nbsp;&nbsp;<img src="{% static 'images/vul_2.png' %}" class="vul"><br>
+                <div class="radio-container">
+                    <input type="radio" name="caseUnderArticle72" value="yes">
+                    <label for="caseUnderArticle72Yes">예</label>
+                    <input type="radio" name="caseUnderArticle72" value="no">
+                    <label for="caseUnderArticle72No">아니오</label><br><br>
+                </div>
+            
+                <label>&nbsp;&nbsp;7-3. 아래의 정보를 처리하는가?</label><br>
+                &nbsp;&nbsp;&nbsp;<img src="{% static 'images/vul_3.png' %}" class="vul"><br>
+                <div class="radio-container">
+                    <input type="radio" name="caseUnderArticle73" value="yes">
+                    <label for="caseUnderArticle73Yes">예</label>
+                    <input type="radio" name="caseUnderArticle73" value="no">
+                    <label for="caseUnderArticle73No">아니오</label><br><br>
+                </div>
+            </div>
+        </div>
+        <div class="checkbox-container">
+            <!--<label>검사할 취약점 : </label>-->
+            <h3>검사할 취약점</h3>
+            <input type="checkbox" name="option" value="전체" id="check-all" {% if '전체' in options %}checked{% endif %}>전체
+            <input type="checkbox" name="option" value="SQL Injection" {% if 'SQL Injection' in options %}checked{% endif %} class="individual-checkbox">SQL Injection
+            <input type="checkbox" name="option" value="XSS" {% if 'XSS' in options %}checked{% endif %} class="individual-checkbox">Cross-Site Scripting
+            <input type="checkbox" name="option" value="Directory Indexing" {% if 'Directory Indexing' in request.POST.getlist.option %}checked{% endif %} class="individual-checkbox">Directory Indexing
+            <input type="checkbox" name="option" value="CSRF" {% if 'CSRF' in options %}checked{% endif %} class="individual-checkbox">Cross Site Request Forgery
+
+        </div>
+
+        
+
+        <script>
+            function toggleSubQuestion(subQuestionId) {
+                document.getElementById(subQuestionId).style.display = 'block';
+            }
+        
+            function resetSubQuestion(subQuestionId) {
+                document.getElementById(subQuestionId).style.display = 'none';
+            }
+        
+            function validatePrivacyForm() {
+                var radioButtons = document.getElementsByName('infoCollection');
+                for (var i = 0; i < radioButtons.length; i++) {
+                    if (radioButtons[i].checked) {
+                        var subQuestionId = radioButtons[i].value;
+                        return validateSubQuestions(subQuestionId);
+                    }
+                }
+        
+                // 개인정보 처리 여부 평가가 완료되지 않았을 경우
+                alert("개인정보 처리 여부 평가를 먼저 완료해주세요.");
+                return false;
+            }
+        
+            function validateSubQuestions(subQuestionId) {
+                var subQuestion = document.getElementById(subQuestionId);
+                if (subQuestion) {
+                    var subRadioButtons = subQuestion.querySelectorAll('input[type="radio"]');
+                    for (var j = 0; j < subRadioButtons.length; j++) {
+                        if (subRadioButtons[j].checked) {
+                            return true;  // 하위 질문에 답변이 있는 경우
+                        }
+                    }
+        
+                    // 선택된 상위 질문의 활성화된 하위 질문에 답변이 없는 경우
+                    alert("하위 질문에 답변을 선택해주세요.");
+                    return false;
+                }
+        
+                // 선택된 상위 질문에 해당하는 하위 질문이 없는 경우
+                return true;
+            }
+        
+            // 각 라디오 버튼에 대한 이벤트 리스너 추가
+            var infoCollectionRadioButtons = document.getElementsByName('infoCollection');
+            infoCollectionRadioButtons.forEach(function (radioButton) {
+                radioButton.addEventListener('change', function () {
+                    var subQuestionId = radioButton.value;
+                    if (radioButton.checked) {
+                        toggleSubQuestion(subQuestionId);
+                    } else {
+                        resetSubQuestion(subQuestionId);
+                    }
+                });
+            });
+        </script>
+        
+        <script>
+            var checkAll = document.getElementById('check-all');
+            var individualCheckboxes = document.querySelectorAll('.individual-checkbox');
+        
+            checkAll.addEventListener('change', function () {
+                var isChecked = checkAll.checked;
+        
+                individualCheckboxes.forEach(function (checkbox) {
+                    checkbox.disabled = isChecked;
+                    checkbox.checked = isChecked;
+                });
+            });
+        </script>
+        
+        <script>
+            function toggleQuestions() {
+                var questions = document.getElementById('questions');
+                var toggleIcon = document.getElementById('toggleIcon');
+                if (questions.className === 'hidden') {
+                    questions.className = '';
+                    toggleIcon.src = "{% static 'images/ok-remove.png' %}"; // 토글이 열린 상태의 아이콘으로 변경
+                } else {
+                    questions.className = 'hidden';
+                    toggleIcon.src = "{% static 'images/nok-remove.png' %}"; // 토글이 닫힌 상태의 아이콘으로 변경
+                }
+            }
+        </script>
+
+        <input type="submit" value="전송" class="submit-button"><br><br><br>
+    </form>
+
+    <script>
+        var startTime;
+    
+        function startTimer() {
+            startTime = new Date().getTime(); // 현재 시간을 startTime 변수에 저장
+        }
+    
+        function validatePrivacyForm() {
+            var radioButtons = document.getElementsByName('infoCollection');
+            for (var i = 0; i < radioButtons.length; i++) {
+                if (radioButtons[i].checked) {
+                    return true;  // 개인정보 처리 여부 평가가 완료됨
+                }
+            }
+    
+            // 개인정보 처리 여부 평가가 완료되지 않았을 경우
+            alert("개인정보 처리 여부 평가를 먼저 완료해주세요.");
+            return false;
+        }
+
+        function validateChecklist() {
+            var questions = document.querySelectorAll('.question input[type="radio"]:checked');
+
+            if (questions.length < 7) {
+                alert("모든 체크리스트 항목을 완료해주세요.");
+                return false;
+            }
+
+            var subQuestionSets = [
+                { main: 'infoCollection', subs: ['safetyMeasure'] },
+                { main: 'processResidentNumber', subs: ['caseUnderArticle24_2', 'residentNumberEncryption', 'allowMembershipWithoutResidentNumber'] },
+                { main: 'dmzStorage', subs: ['dmzEncrypt'] },
+                { main: 'internalNetwork', subs: ['internalEncrypt', 'riskAnalysis'] },
+                { main: 'riskCalculation', subs: ['caseUnderArticle71', 'caseUnderArticle72', 'caseUnderArticle73'] }
+            ];
+
+            for (var i = 0; i < subQuestionSets.length; i++) {
+                var mainQuestion = document.querySelector(`input[name="${subQuestionSets[i].main}"][value="yes"]`);
+                if (mainQuestion && mainQuestion.checked) {
+                    for (var j = 0; j < subQuestionSets[i].subs.length; j++) {
+                        var subQuestion = document.getElementsByName(subQuestionSets[i].subs[j]);
+                        var isSubQuestionChecked = Array.from(subQuestion).some(radio => radio.checked);
+                        if (!isSubQuestionChecked) {
+                            alert("모든 보이는 하위 질문에 대해 응답해주세요.");
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        
+        function vul_validateForm() {
+            if (!validatePrivacyForm() || !validateChecklist()) {
+                return false;
+            }
+
+            // 취약점 선택 검사
+            var checkboxes = document.getElementsByName('option');
+            var isChecked = false;
+            for (var i = 0; i < checkboxes.length; i++) {
+                if (checkboxes[i].checked) {
+                    isChecked = true;
+                    break;
+                }
+            }
+            if (!isChecked) {
+                alert('최소 하나 이상의 취약점을 선택해주세요.');
+                return false;
+            }
+
+            return true;
+        }
+
+        function validateForm() {
+            var urlInput = document.getElementById('url');
+            var optionCheckboxes = document.querySelectorAll('input[name="option"]:checked');
+    
+            if (!isValidURL(urlInput.value)) {
+                alert("유효한 URL을 입력해주세요. (https://)");
+                return false;
+            }
+    
+            if (optionCheckboxes.length === 0) {
+                alert("적어도 하나 이상의 옵션을 선택해주세요.");
+                return false;
+            }
+    
+            // 페이지 로딩 시작 시간 기록
+            startTimer();
+    
+            return true;
+        }
+    
+        function isValidURL(text) {
+            var urlPattern = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i;
+            return urlPattern.test(text);
+        }
+    
+        // 페이지 로딩 완료 시간 측정 및 출력
+        window.addEventListener('load', function() {
+            var endTime = new Date().getTime();
+            var loadTime = (endTime - startTime) / 1000; // 초 단위로 변환
+    
+            // 결과 페이지의 특정 div에 로딩 시간 출력
+            document.getElementById('load-time').innerText = '페이지 로딩 시간: ' + loadTime.toFixed(2) + '초';
+        });
+    
+        // 페이지 로딩 완료 후 추가적인 작업을 할 경우
+        window.addEventListener('DOMContentLoaded', function() {
+            // 추가 작업을 수행할 코드
+        });
+    </script>
+    
+    <br>
+    <br>
+    <h1>코드 입력</h1>
+    <form method="post" action="{% url 'code_analysis' %}">
+        {% csrf_token %}
+        <textarea name="code" id="code" required placeholder="코드를 입력해주세요." style="width: 2000px; height: 150px;"></textarea><br>
+        <input type="submit" value="분석 시작" class="submit-button"><br><br>
+    </form>
+</body>
+</html>
