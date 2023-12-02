@@ -140,3 +140,18 @@ def no_crawl(base_url, options):
         thread.join()
 
     return all_directory_vulnerabilities
+
+def scan(base_url, options):
+    all_vulnerabilities = []
+
+    if "전체" in options or "Directory Indexing" in options:
+        all_directory_vulnerabilities = no_crawl(base_url, options)
+        all_vulnerabilities.extend(all_directory_vulnerabilities)
+
+    if "전체" in options or "XSS" in options or "CSRF" in options or "SQL Injection" in options:
+        all_xss_vulnerabilities, all_sql_vulnerabilities, all_csrf_vulnerabilities = crawl_and_scan(base_url, options)
+        all_vulnerabilities.extend(all_xss_vulnerabilities)
+        all_vulnerabilities.extend(all_sql_vulnerabilities)
+        all_vulnerabilities.extend(all_csrf_vulnerabilities)
+
+    return all_vulnerabilities
