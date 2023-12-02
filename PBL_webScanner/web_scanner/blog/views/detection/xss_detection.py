@@ -110,8 +110,6 @@ def xss_detection(url, vulnerabilities):
 
                         for payload in payloads:
                             form_data[input_name] = payload
-
-                            response = session.post(form_action, data=form_data)
                             print("POST's data : ", form_data)
 
                             # 옵션 생성
@@ -152,8 +150,6 @@ def xss_detection(url, vulnerabilities):
                             if input_type != "submit":
                                 for payload in payloads:
                                     form_data[input_name] = payload
-
-                                    response = session.post(form_action, data=form_data)
                                     print("POST's data : ", form_data)
 
                                     # 옵션 생성
