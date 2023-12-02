@@ -211,15 +211,148 @@ DBMS_ERROR_PATTERNS = {
     ]
 }
 
+def url_detection(url, payloads, session):
+    if '?' in url:
+        parsed_url = urlparse(url)
+        query_params = parse_qs(parsed_url.query)
+
+        split_url = urlsplit(url)
+        no_query_url = urlunsplit((split_url.scheme, split_url.netloc, split_url.path, '', ''))
+            
+        for payload in payloads:
+            if query_params is not None:  # 추가된 None 체크
+                for params in query_params:
+                    query_params[params] = payload
+                update_query_string = urlencode(query_params, doseq=True)
+                payload_url = parsed_url._replace(query=update_query_string).geturl()
+                get_response = session.get(payload_url)
+                    
+                for dbms, regex_list in DBMS_ERROR_PATTERNS.items():
+                    for regex in regex_list:
+                        if regex.search(get_response.text):
+                            print(f"{url}: {dbms} 취약점 발견")
+                            return no_query_url
+            else:
+                parsed_url = urlparse(url)
+                query_params = parse_qs(parsed_url.query)
+
+                split_url = urlsplit(url)
+                no_query_url = urlunsplit((split_url.scheme, split_url.netloc, split_url.path, '', ''))
+            
+                for payload in payloads:
+                    payload_url = url + payload
+                    get_response = session.get(payload_url)
+
+                    for dbms, regex_list in DBMS_ERROR_PATTERNS.items():
+                        for regex in regex_list:
+                            if regex.search(get_response.text):
+                                print(f"{url}: {dbms} 취약점 발견")
+                                return no_query_url
+
+    else:
+        for payload in payloads:
+            payload_url = url + '?' + payload
+            get_response = session.get(payload_url)
+                    
+            for dbms, regex_list in DBMS_ERROR_PATTERNS.items():
+                for regex in regex_list:
+                    if regex.search(get_response.text):
+                        print(f"{url}: {dbms} 취약점 발견")
+                        return no_query_url
+    
+    return
+
+def form_detected(url, forms, payloads, session):
+    pass_pattern = re.compile(r'\bpassword\b', re.IGNORECASE)
+    update_payload = {}
+
+    for form in forms:
+        # 폼 액션 URL과 전송 방식 가져오기
+        form_action = form.get("action")
+        print(form_action)
+        if form_action is None:
+            form_action = url
+        else:
+            form_action = urljoin(url, form_action)
+        
+        vulnerable_urls = url_detection(form_action, payloads, session)
+
+        if vulnerable_urls:
+            return vulnerable_urls
+
+        form_method = form.get("method")
+        if form_method is None:
+            form_method = "get"
+
+            if form_method.lower() == "get":
+                for input_field in form.find_all("input"):
+                    input_name = input_field.get("name")
+                    input_type = input_field.get("type")
+
+                for payload in payloads:
+                    for name, type in input_name, input_type:
+                        if type != 'submit':
+                            if pass_pattern.search(type):
+                                update_payload[name] = 'swu_canner'
+                            else:
+                                update_payload[name] = payload
+                            
+                    get_response = session.get(form_action, params=update_payload)
+                    if 'logout' in get_response.text.lower():
+                        return form_action
+                    else:
+                        for dbms, regex_list in DBMS_ERROR_PATTERNS.items():
+                            for regex in regex_list:
+                                if regex.search(get_response.text):
+                                    print(f"{url}: {dbms} 취약점 발견")
+                                    return form_action
+
+
+            # POST 방식으로 폼 요청 처리
+            elif form_method.lower() == "post":
+                form_action = urljoin(url, form_action)
+                input_data = {}
+                for input_field in form.find_all("input"):
+                    # input_name = input_field.get("name")
+                    # input_type = input_field.get("type")
+                    input_data[input_field.get("name")] = input_field.get("type")
+                
+                for payload in payloads:
+                    for name in input_data:
+                        if input_data[name] != 'submit':
+                            if pass_pattern.search(input_data[name]):
+                                update_payload[name] = 'swu_canner'
+                            else:
+                                update_payload[name] = payload
+                            
+                    # query_string = urlencode(update_payload)
+                    query_string = update_payload
+                    print(query_string)
+                    de_response = session.post(form_action, data=query_string)
+
+                    de_soup = BeautifulSoup(de_response.text, 'html.parser')
+                    all_links = de_soup.find_all('a')
+                    logout_links = [link for link in all_links if 'logout' in str(link).lower()]
+
+                    if logout_links:
+                        return form_action
+                    else:
+                        for dbms, regex_list in DBMS_ERROR_PATTERNS.items():
+                            for regex in regex_list:
+                                if regex.search(de_response.text):
+                                    print(f"{url}: {dbms} 취약점 발견")
+                                    return form_action
+
+    return
+
 def sql_injection_detection(url, vulnerabilities):
     logger.info("Starting SQL Injection detection...")
 
-    fname = "blog/payloads/sql.txt"
+    fname = "blog\payloads\sql.txt"
     with open(fname) as f:
         content = f.readlines()
     payloads = [x.strip() for x in content]
     
-    vulnerable_urls = []
     print(url)
 
     # 세션 시작
@@ -228,137 +361,16 @@ def sql_injection_detection(url, vulnerabilities):
     response = session.get(url)
     soup = BeautifulSoup(response.text, "html.parser")
 
-    stop = False
+    vulnerable_urls = url_detection(url, payloads, session)
+    if vulnerable_urls:
+        vulnerabilities.append(vulnerable_urls)
 
     # 폼 요소 찾기
     forms = soup.find_all("form")
-    
-    if '?' in url:
-        if response.request.method == 'GET':
-            parsed_url = urlparse(url)
-            query_params = parse_qs(parsed_url.query)
-
-            split_url = urlsplit(url)
-            no_query_url = urlunsplit((split_url.scheme, split_url.netloc, split_url.path, '', ''))
-            print(no_query_url)
-
-            for payload in payloads:
-                if payload is not None:  # 추가된 None 체크
-                    for params in query_params:
-                        query_params[params] = payload
-                    update_query_string = urlencode(query_params, doseq=True)
-                    payload_url = parsed_url._replace(query=update_query_string).geturl()
-                    # print(f"payload_url : {payload_url}")
-                    get_response = session.get(payload_url)
-                    
-                    for dbms, regex_list in DBMS_ERROR_PATTERNS.items():
-                        for regex in regex_list:
-                            if regex.search(get_response.text):
-                                vulnerable_urls.append(no_query_url)
-                                print(f"{url}: {dbms} 취약점 발견")
-                                stop = True
-                        if stop:
-                            break
-                if stop:
-                    break
-
-        else:
-            for payload in payloads:
-                payload_url = url + payload
-                # print(f"payload: {payload}")
-                get_response = session.get(payload_url)
-
-                for dbms, regex_list in DBMS_ERROR_PATTERNS.items():
-                    for regex in regex_list:
-                        if regex.search(get_response.text):
-                            vulnerable_urls.append(url)
-                            print(f"{dbms} 취약점 발견")
-                            stop = True
-                    if stop:
-                        break
-
-                if stop:
-                    break
 
     if forms:
-        for form in forms:
-            # 폼 액션 URL과 전송 방식 가져오기
-            form_action = form.get("action")
-            if form_action is None:
-                form_action = url
-            else:
-                form_action = urljoin(url, form_action)
-                
-            form_method = form.get("method")
-            if form_method is None:
-                form_method = "get"
-            else:
-                form_method = form_method.lower()
-
-            #print("폼 액션 : ",form_action)
-            #print("폼 메소드 : ",form_method)
-
-            # GET 방식으로 폼 요청 처리
-            if form_method == "get":
-                #print("get 들어옴")
-                for input_field in form.find_all("input"):
-                    input_name = input_field.get("name")
-                    input_type = input_field.get("type")
-
-                    # "submit" 타입의 입력 필드에 대해 페이로드 주입하지 않음(버튼이기 때문)
-                    if input_type != "submit":
-                        for payload in payloads:
-                            if payload is not None:  # 추가된 None 체크
-                                encoded_payload = {input_name: payload}
-                                query_string = urlencode(encoded_payload)
-                                payload_url = urljoin(url, form_action) + "?" + query_string # ex)http://testphp.vulnweb.com/search.php?searchFor=hello%21
-                                #print("payload_url : %s",payload_url)
-                                get_response = session.get(payload_url)
-                                if 'logout' in get_response.text.lower():  # 추가된 None 체크
-                                    vulnerable_urls.append(payload_url)
-
-            # POST 방식으로 폼 요청 처리
-            elif form_method == "post":
-                #print("post로 들어옴.")
-                form_action = urljoin(url, form_action)
-                form_data = {}
-                for input_field in form.find_all("input"):
-                    input_name = input_field.get("name")
-                    input_type = input_field.get("type")
-
-                      # "submit" 타입의 입력 필드에 대해 페이로드 주입하지 않음
-                    if input_type != "submit":
-                        for payload in payloads:
-                             if payload is not None:
-                                form_data[input_name] = payload
-                                de_response = session.post(form_action, data=form_data)
-                                #print("post의 data에 들어가는 내용 : ", form_data)
-
-                                # response html 파싱해서 logout 버튼 활성화 됐는지 확인
-                                # 모든 하이퍼링크(<a> 태그)를 찾기
-                                de_soup = BeautifulSoup(de_response.text, 'html.parser')
-                                all_links = de_soup.find_all('a')
-                                #print(all_links)
-                                
-                                # 로그아웃 문자열이 포함된 하이퍼링크 찾기
-                                logout_links = [link for link in all_links if 'logout' in str(link).lower()]
-
-                                if logout_links:
-                                    vulnerable_urls.append(form_action)
-
-                                # payload가 응답 텍스트에 포함되는지 확인되면,
-                                # 취약한 페이로드로 간주되어 vulnerable_urls 리스트에 추가
-                                # if 'logout' in response.text.lower():
-                                #     vulnerable_urls.append(form_action)
-
-    if vulnerable_urls:
-        # for url in vulnerable_urls:
-        #     print(url)
-        print(f"SQLi 공격에 성공한 페이로드 개수: {len(vulnerable_urls)}")
-        vulnerabilities.extend(vulnerable_urls)
-    # else:
-    #     print("SQLi 취약점이 발견되지 않았습니다.")
+        vulnerable_urls = form_detected(url, forms, payloads, session)
+        if vulnerable_urls:
+            vulnerabilities.append(vulnerable_urls)
 
     logger.info("Finished SQL Injection detection.")
-
-    
