@@ -87,7 +87,6 @@ def xss_detection(url, vulnerabilities):
                                     alert = WebDriverWait(driver, 5).until(EC.alert_is_present())
                                     # Alert이 나타나면 accept()를 호출하여 OK 버튼을 클릭
                                     alert.accept()
-                                    # vulnerable_urls.add(url)
                                     vulnerabilities.append(url)
                                     print(f"XSS 취약점이 발견된 URL (GET 방식): {url} 주입된 페이로드: {payload}")
                                     driver.quit()
