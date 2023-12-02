@@ -43,8 +43,6 @@ def xss_detection(url, vulnerabilities):
             print("폼이 없습니다.")
             return
 
-        vulnerable_urls = set()
-
         if forms:
             for form in forms:
                 # 폼 액션 URL과 전송 방식 가져오기
@@ -89,8 +87,10 @@ def xss_detection(url, vulnerabilities):
                                     alert = WebDriverWait(driver, 5).until(EC.alert_is_present())
                                     # Alert이 나타나면 accept()를 호출하여 OK 버튼을 클릭
                                     alert.accept()
-                                    vulnerable_urls.add(url)
+                                    # vulnerable_urls.add(url)
+                                    vulnerabilities.append(url)
                                     print(f"XSS 취약점이 발견된 URL (GET 방식): {url} 주입된 페이로드: {payload}")
+                                    driver.quit()
                                     return
                                 except:
                                     print('Alert이 나타나지 않음')
@@ -135,8 +135,9 @@ def xss_detection(url, vulnerabilities):
 
                                 # Alert이 나타나면 accept()를 호출하여 OK 버튼을 클릭
                                 alert.accept()
-                                vulnerable_urls.add(url)
+                                vulnerabilities.append(url)
                                 print(f"XSS 취약점이 발견된 URL (POST 방식): {url} 주입된 페이로드: {payload}")
+                                driver.quit()
                                 return
                             except:
                                 print('XSS 취약점이 존재하지 않습니다.')
@@ -176,19 +177,15 @@ def xss_detection(url, vulnerabilities):
 
                                         # Alert이 나타나면 accept()를 호출하여 OK 버튼을 클릭
                                         alert.accept()
-                                        vulnerable_urls.add(url)
+                                        vulnerabilities.append(url)
                                         print(f"XSS 취약점이 발견된 URL (POST 방식): {url} 주입된 페이로드: {payload}")
+                                        driver.quit()
                                         return
                                     except:
                                         print('XSS 취약점이 존재하지 않습니다.')
                                         continue
 
         driver.quit()
-
-        if vulnerable_urls:
-            vulnerabilities.extend(vulnerable_urls)
-        else:
-            print("XSS 취약점이 발견되지 않았습니다.")
 
         logger.info("Finished XSS detection.")
 

@@ -24,35 +24,6 @@ TOKEN_HEADER_STRINGS = [
     "anti-csrf-token", "x-csrf-header", "x-xsrf-header", "x-csrf-protection"
 ]
 
-
-# SameSite 쿠키 검증
-def validate_same_site_cookie(set_cookie_header):
-    same_site_pattern = r'SameSite=(Strict|Lax)'
-    match = re.search(same_site_pattern, set_cookie_header)
-    if match:
-        same_site_value = match.group(1)
-        if same_site_value in ["Strict", "Lax"]:
-            print(f"SameSite 속성이 올바르게 설정되었습니다: {same_site_value}")
-        else:
-            print(f"SameSite 속성이 설정되어 있지만, 올바르지 않은 값입니다: {same_site_value}")
-    else:
-        print("SameSite 속성이 설정되어 있지 않습니다.")
-
-# CSRF 쿠키 검증
-def check_csrf_cookie(headers):
-    if 'set-cookie' in headers:
-        cookies = headers['set-cookie']
-        if 'CSRF_COOKIE' in cookies:
-            print("CSRF 쿠키를 사용하는데 검증이 필요합니다.")
-
-# CSRF 쿠키 및 SameSite 검증 함수 통합
-def validate_csrf_cookie_and_samesite(set_cookie_header):
-    validate_same_site_cookie(set_cookie_header)
-    check_csrf_cookie(set_cookie_header)
-
-# # CSRF 취약점 확인
-# def check_csrf_vulnerability(url, csrf_token):
-
 # 얼마나 무작위하고 예측하기 어려운지, 암호화 키의 예측 불가능성을 평가
 def entropy(string: str):
     probabilities = [n_x / len(string) for x, n_x in Counter(string).items()]
@@ -79,11 +50,10 @@ def extract_csrf_token_from_headers(headers):
 
 def csrf_detection(url, vulnerabilities):
     logger.info("Starting CSRF detection...")
+    csrf_token = None
     try:
         response = requests.get(url)
         soup = BeautifulSoup(response.text, 'html.parser')
-        csrf_vul_url_list = []
-        csrf_token = None
 
         # 폼 요소를 찾아 CSRF 토큰 추출
         forms = soup.find_all('form')
@@ -98,27 +68,37 @@ def csrf_detection(url, vulnerabilities):
         if not csrf_token:
             # 폼에서 찾지 못했으면 헤더에서 시도
             csrf_token = extract_csrf_token_from_headers(response.headers)
-            print(response.headers)
 
             if not csrf_token:
                 # 헤더에서도 찾지 못하면 요청 헤더에서 시도
                 csrf_token = extract_csrf_token_from_headers(response.request.headers)
-                print(response.request.headers)
 
             if not csrf_token:
                 print("CSRF토큰이 없는 취약한 사이트입니다.")
-                csrf_vul_url_list.append(url)
-                return
+                # vulnerabilities.extend(url)
+                vulnerabilities.append(url)
 
         elif csrf_token and re.match(r'^[\w\-_]+$', csrf_token):
             print(f"CSRF Token Found: {csrf_token}")
             # CSRF 토큰이 발견된 경우에 추가 검증 실행
-            validate_csrf_cookie_and_samesite(response.headers['set-cookie'])  # CSRF 및 SameSite 쿠키 검증 추가
+            same_site_pattern = r'SameSite=(Strict|Lax)'
+            match = re.search(same_site_pattern, response.headers.get('set-cookie', ''))
+            if match:
+                same_site_value = match.group(1)
+                if same_site_value in ["Strict", "Lax"]:
+                    print(f"SameSite 속성이 올바르게 설정되었습니다: {same_site_value}")
+                else:
+                    print(f"SameSite 속성이 설정되어 있지만, 올바르지 않은 값입니다: {same_site_value}")
+                    vulnerabilities.append(url)
+                    return
+            else:
+                print("SameSite 속성이 설정되어 있지 않습니다.")
+                vulnerabilities.append(url)
+                return
             
             if entropy(csrf_token) < MIN_ENTROPY:
                 print(f"예측 가능한 취약한 토큰입니다 (Entropy: {entropy(csrf_token)})")
-                csrf_vul_url_list.append(url)
-                return
+                vulnerabilities.append(url)
             else:
                 print(entropy(csrf_token))
                 if strength(csrf_token) > 20:
@@ -134,18 +114,14 @@ def csrf_detection(url, vulnerabilities):
                             for name in element['matches']:
                                 matches.append(name)
                     if matches:
-                        csrf_vul_url_list.append(url)
+                        vulnerabilities.append(url)
                         print("토큰이 만들어진 해시함수가 예측되므로 취약한 토큰입니다. : {matches}")
+
                     else:
                         print("견고한 토큰입니다.")
                 else:
                     print(f"문자열의 복잡성이 낮은 취약한 토큰입니다.")
-                    csrf_vul_url_list.append(url)
-
-        if csrf_vul_url_list:
-            vulnerabilities.extend(csrf_vul_url_list)
-        else:
-            return []
+                    vulnerabilities.append(url)
 
         logger.info("Finished CSRF detection.")
 
