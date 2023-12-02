@@ -265,90 +265,89 @@ def url_detection(url, payloads, session):
 def form_detected(url, forms, payloads, session):
     pass_pattern = re.compile(r'\bpassword\b', re.IGNORECASE)
     update_payload = {}
+    vulnerable_urls = []
 
     for form in forms:
         # 폼 액션 URL과 전송 방식 가져오기
         form_action = form.get("action")
-        print(form_action)
         if form_action is None:
             form_action = url
         else:
             form_action = urljoin(url, form_action)
-        
-        vulnerable_urls = url_detection(form_action, payloads, session)
 
-        if vulnerable_urls:
-            return vulnerable_urls
+        print(form_action)
+        vulnerable_urls.append(url_detection(form_action, payloads, session))
 
         form_method = form.get("method")
         if form_method is None:
             form_method = "get"
 
-            if form_method.lower() == "get":
-                for input_field in form.find_all("input"):
-                    input_name = input_field.get("name")
-                    input_type = input_field.get("type")
+        if form_method.lower() == "get":
+            for input_field in form.find_all("input"):
+                input_name = input_field.get("name")
+                input_type = input_field.get("type")
 
-                for payload in payloads:
-                    for name, type in input_name, input_type:
-                        if type != 'submit':
-                            if pass_pattern.search(type):
-                                update_payload[name] = 'swu_canner'
-                            else:
-                                update_payload[name] = payload
+            for payload in payloads:
+                for name, type in input_name, input_type:
+                    if type != 'submit':
+                        if pass_pattern.search(type):
+                            update_payload[name] = 'swu_canner'
+                        else:
+                            update_payload[name] = payload
                             
-                    get_response = session.get(form_action, params=update_payload)
-                    if 'logout' in get_response.text.lower():
-                        return form_action
-                    else:
-                        for dbms, regex_list in DBMS_ERROR_PATTERNS.items():
-                            for regex in regex_list:
-                                if regex.search(get_response.text):
-                                    print(f"{url}: {dbms} 취약점 발견")
-                                    return form_action
+                get_response = session.get(form_action, params=update_payload)
+                if 'logout' in get_response.text.lower():
+                    vulnerable_urls.append(form_action)
+                else:
+                    for dbms, regex_list in DBMS_ERROR_PATTERNS.items():
+                        for regex in regex_list:
+                            if regex.search(get_response.text):
+                                print(f"{url}: {dbms} 취약점 발견")
+                                vulnerable_urls.append(form_action)
 
 
-            # POST 방식으로 폼 요청 처리
-            elif form_method.lower() == "post":
-                form_action = urljoin(url, form_action)
-                input_data = {}
-                for input_field in form.find_all("input"):
-                    # input_name = input_field.get("name")
-                    # input_type = input_field.get("type")
-                    input_data[input_field.get("name")] = input_field.get("type")
+        # POST 방식으로 폼 요청 처리
+        elif form_method.lower() == "post":
+            form_action = urljoin(url, form_action)
+            input_data = {}
+            for input_field in form.find_all("input"):
+                # input_name = input_field.get("name")
+                # input_type = input_field.get("type")
+                input_data[input_field.get("name")] = input_field.get("type")
                 
-                for payload in payloads:
-                    for name in input_data:
-                        if input_data[name] != 'submit':
-                            if pass_pattern.search(input_data[name]):
-                                update_payload[name] = 'swu_canner'
-                            else:
-                                update_payload[name] = payload
+            for payload in payloads:
+                for name in input_data:
+                    if input_data[name] != 'submit':
+                        if pass_pattern.search(input_data[name]):
+                            update_payload[name] = 'swu_canner'
+                        else:
+                            update_payload[name] = payload
                             
-                    # query_string = urlencode(update_payload)
-                    query_string = update_payload
-                    print(query_string)
-                    de_response = session.post(form_action, data=query_string)
+                # query_string = urlencode(update_payload)
+                query_string = update_payload
+                # print(query_string)
+                de_response = session.post(form_action, data=query_string)
 
-                    de_soup = BeautifulSoup(de_response.text, 'html.parser')
-                    all_links = de_soup.find_all('a')
-                    logout_links = [link for link in all_links if 'logout' in str(link).lower()]
+                de_soup = BeautifulSoup(de_response.text, 'html.parser')
+                all_links = de_soup.find_all('a')
+                logout_links = [link for link in all_links if 'logout' in str(link).lower()]
 
-                    if logout_links:
-                        return form_action
-                    else:
-                        for dbms, regex_list in DBMS_ERROR_PATTERNS.items():
-                            for regex in regex_list:
-                                if regex.search(de_response.text):
-                                    print(f"{url}: {dbms} 취약점 발견")
-                                    return form_action
+                if logout_links:
+                    vulnerable_urls.append(form_action)
+                else:
+                    for dbms, regex_list in DBMS_ERROR_PATTERNS.items():
+                        for regex in regex_list:
+                            if regex.search(de_response.text):
+                                print(f"{url}: {dbms} 취약점 발견")
+                                vulnerable_urls.append(form_action)
+        
 
-    return
+    return vulnerable_urls
 
 def sql_injection_detection(url, vulnerabilities):
     logger.info("Starting SQL Injection detection...")
 
-    fname = "blog\payloads\sql.txt"
+    fname = "payload\sql.txt"
     with open(fname) as f:
         content = f.readlines()
     payloads = [x.strip() for x in content]
@@ -371,6 +370,6 @@ def sql_injection_detection(url, vulnerabilities):
     if forms:
         vulnerable_urls = form_detected(url, forms, payloads, session)
         if vulnerable_urls:
-            vulnerabilities.append(vulnerable_urls)
+            vulnerabilities.extend(vulnerable_urls)
 
     logger.info("Finished SQL Injection detection.")
