@@ -3,7 +3,13 @@ from bs4 import BeautifulSoup
 import logging
 from requests.exceptions import RequestException
 from urllib.parse import urljoin, urlencode, urlparse, parse_qs, urlsplit, urlunsplit
-
+from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from time \
+import sleep
+from selenium import webdriver
 
 
 logging.basicConfig(level=logging.INFO)
@@ -28,6 +34,7 @@ def xss_detection(url, vulnerabilities):
 
         # 웹 페이지 불러오기
         response = session.get(url)
+        response.raise_for_status()  # HTTP 에러 발생 시 예외 발생
         soup = BeautifulSoup(response.text, "html.parser")
 
         # 폼 요소 찾기
@@ -36,7 +43,7 @@ def xss_detection(url, vulnerabilities):
             print("폼이 없습니다.")
             return
 
-        vulnerable_urls = []
+        vulnerable_urls = set()
 
         if forms:
             for form in forms:
@@ -54,9 +61,6 @@ def xss_detection(url, vulnerabilities):
                 else:
                     form_method = form_method.lower()
 
-                # print("폼 액션 : ",form_action)
-                # print("폼 메소드 : ",form_method)
-
                 # GET 방식으로 폼 요청 처리
                 if form_method == "get":
                     print("GET METHOD")
@@ -67,42 +71,121 @@ def xss_detection(url, vulnerabilities):
                         # "submit" 타입의 입력 필드에 대해 페이로드 주입하지 않음(버튼이기 때문)
                         if input_type != "submit":
                             for payload in payloads:
-                                if payload is not None:  # 추가된 None 체크
-                                    encoded_payload = {input_name: payload}
-                                    query_string = urlencode(encoded_payload)
-                                    payload_url = urljoin(url, form_action) + "?" + query_string # ex)http://testphp.vulnweb.com/search.php?searchFor=hello%21
-                                    print("주입된 url : %s", payload_url)
-                                    get_response = session.get(payload_url)
+                                encoded_payload = {input_name: payload}
+                                query_string = urlencode(encoded_payload)
+                                payload_url = urljoin(url, form_action) + "?" + query_string
+                                print("주입된 url : %s", payload_url)
 
-                                    if get_response.text is not None and payload.lower() in get_response.text.lower():  # 추가된 None 체크
-                                        vulnerable_urls.append(url)
-                                        print(f"XSS 취약점이 발견된 URL (GET 방식): {url} 페이로드: {payload}")
+                                # 옵션 생성
+                                op = webdriver.ChromeOptions()
+                                # 창 숨기는 옵션 추가
+                                op.add_argument("headless")
+
+                                # Selenium을 사용하여 Alert 창 감지
+                                driver = webdriver.Chrome(options=op)
+
+                                try:
+                                    driver.get(payload_url)
+                                    alert = WebDriverWait(driver, 5).until(EC.alert_is_present())
+                                    # Alert이 나타나면 accept()를 호출하여 OK 버튼을 클릭
+                                    alert.accept()
+                                    vulnerable_urls.add(url)
+                                    print(f"XSS 취약점이 발견된 URL (GET 방식): {url} 주입된 페이로드: {payload}")
+                                    return
+                                except:
+                                    print('Alert이 나타나지 않음')
+                                    continue
 
                 # POST 방식으로 폼 요청 처리
                 elif form_method == "post":
                     print("form_method : POST")
                     form_action = urljoin(url, form_action)
                     form_data = {}
-                    for input_field in form.find_all("input"):
-                        input_name = input_field.get("name")
-                        input_type = input_field.get("type")
 
-                        # "submit" 타입의 입력 필드에 대해 페이로드 주입하지 않음
-                        if input_type != "submit":
-                            for payload in payloads:
-                                if payload is not None:
+                    submit_input_names = [input_field.get("name") for input_field in form.find_all("input") if input_field.get("type") == "submit"]
+                    
+                    # textarea가 있는 경우에만 동작
+                    textarea = form.find("textarea")
+                    if textarea:
+                        input_name = textarea.get("name")
+
+                        for payload in payloads:
+                            form_data[input_name] = payload
+
+                            response = session.post(form_action, data=form_data)
+                            print("POST's data : ", form_data)
+
+                            # 옵션 생성
+                            op = webdriver.ChromeOptions()
+                            # 창 숨기는 옵션 추가
+                            op.add_argument("headless")
+
+                            # Selenium을 사용하여 Alert 창 감지
+                            driver = webdriver.Chrome(options=op)
+
+                            try:
+                                driver.get(url)
+                                driver.find_element(By.NAME, input_name).send_keys(payload)
+
+                                for button in submit_input_names:
+                                    driver.find_element(By.NAME, button).click()
+
+                                # WebDriverWait를 사용하여 Alert이 나타날 때까지 기다림
+                                alert = WebDriverWait(driver, 5).until(EC.alert_is_present())
+
+                                # Alert이 나타나면 accept()를 호출하여 OK 버튼을 클릭
+                                alert.accept()
+                                vulnerable_urls.add(url)
+                                print(f"XSS 취약점이 발견된 URL (POST 방식): {url} 주입된 페이로드: {payload}")
+                                return
+                            except:
+                                print('XSS 취약점이 존재하지 않습니다.')
+                                continue
+
+                    else:
+                        # textarea가 없으면 다른 input 요소에 페이로드 주입
+                        for input_field in form.find_all("input"):
+                            input_name = input_field.get("name")
+                            input_type = input_field.get("type")
+
+                            # "submit" 타입의 입력 필드에 대해 페이로드 주입하지 않음
+                            if input_type != "submit":
+                                for payload in payloads:
                                     form_data[input_name] = payload
+
                                     response = session.post(form_action, data=form_data)
                                     print("POST's data : ", form_data)
 
-                                    # payload가 응답 텍스트에 포함되는지 확인되면,
-                                    # 취약한 페이로드로 간주되어 vulnerable_urls 리스트에 추가
-                                    if response.text is not None and payload.lower() in response.text.lower():
-                                        vulnerable_urls.append(url)
-                                        print(f"XSS 취약점이 발견된 URL (POST 방식): {url} 페이로드: {payload}")
+                                    # 옵션 생성
+                                    op = webdriver.ChromeOptions()
+                                    # 창 숨기는 옵션 추가
+                                    op.add_argument("headless")
+
+                                    # Selenium을 사용하여 Alert 창 감지
+                                    driver = webdriver.Chrome(options=op)
+                                    try:
+                                        driver.get(url)
+                                        driver.find_element(By.NAME, input_name).send_keys(payload)
+                                        sleep(5)
+
+                                        for button in submit_input_names:
+                                            driver.find_element(By.NAME, button).click()
+
+                                        # WebDriverWait를 사용하여 Alert이 나타날 때까지 기다림
+                                        alert = WebDriverWait(driver, 3).until(EC.alert_is_present())
+
+                                        # Alert이 나타나면 accept()를 호출하여 OK 버튼을 클릭
+                                        alert.accept()
+                                        vulnerable_urls.add(url)
+                                        print(f"XSS 취약점이 발견된 URL (POST 방식): {url} 주입된 페이로드: {payload}")
+                                        return
+                                    except:
+                                        print('XSS 취약점이 존재하지 않습니다.')
+                                        continue
+
+        driver.quit()
 
         if vulnerable_urls:
-            print(f"XSS 공격에 성공한 페이로드 개수: {len(vulnerable_urls)}")
             vulnerabilities.extend(vulnerable_urls)
         else:
             print("XSS 취약점이 발견되지 않았습니다.")
