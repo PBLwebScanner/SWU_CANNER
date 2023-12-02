@@ -17,7 +17,9 @@ def directory_indexing_detection(url, vulnerabilities):
 
         for payload in payloads:
             dectect_url = url + payload
-            if not dectect_url in vul_url_list:
+            if dectect_url in vul_url_list:
+                print('dork 방식으로 탐지함')
+            else:
                 response = requests.get(dectect_url)
 
                 if 'index of' in response.text.lower():

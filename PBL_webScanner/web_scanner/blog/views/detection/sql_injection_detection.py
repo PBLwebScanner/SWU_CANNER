@@ -233,11 +233,6 @@ def url_detection(url, payloads, session):
                             print(f"{url}: {dbms} 취약점 발견")
                             return no_query_url
             else:
-                parsed_url = urlparse(url)
-                query_params = parse_qs(parsed_url.query)
-
-                split_url = urlsplit(url)
-                no_query_url = urlunsplit((split_url.scheme, split_url.netloc, split_url.path, '', ''))
             
                 for payload in payloads:
                     payload_url = url + payload
@@ -283,14 +278,16 @@ def form_detected(url, forms, payloads, session):
             form_method = "get"
 
         if form_method.lower() == "get":
+            input_data = {}
             for input_field in form.find_all("input"):
-                input_name = input_field.get("name")
-                input_type = input_field.get("type")
-
+                # input_name = input_field.get("name")
+                # input_type = input_field.get("type")
+                input_data[input_field.get("name")] = input_field.get("type")
+                
             for payload in payloads:
-                for name, type in input_name, input_type:
-                    if type != 'submit':
-                        if pass_pattern.search(type):
+                for name in input_data:
+                    if input_data[name] != 'submit':
+                        if pass_pattern.search(input_data[name]):
                             update_payload[name] = 'swu_canner'
                         else:
                             update_payload[name] = payload
@@ -308,7 +305,7 @@ def form_detected(url, forms, payloads, session):
 
         # POST 방식으로 폼 요청 처리
         elif form_method.lower() == "post":
-            form_action = urljoin(url, form_action)
+            # form_action = urljoin(url, form_action)
             input_data = {}
             for input_field in form.find_all("input"):
                 # input_name = input_field.get("name")
@@ -323,10 +320,7 @@ def form_detected(url, forms, payloads, session):
                         else:
                             update_payload[name] = payload
                             
-                # query_string = urlencode(update_payload)
-                query_string = update_payload
-                # print(query_string)
-                de_response = session.post(form_action, data=query_string)
+                de_response = session.post(form_action, data=update_payload)
 
                 de_soup = BeautifulSoup(de_response.text, 'html.parser')
                 all_links = de_soup.find_all('a')
@@ -351,8 +345,6 @@ def sql_injection_detection(url, vulnerabilities):
     with open(fname) as f:
         content = f.readlines()
     payloads = [x.strip() for x in content]
-    
-    print(url)
 
     # 세션 시작
     session = requests.Session()
@@ -371,5 +363,8 @@ def sql_injection_detection(url, vulnerabilities):
         vulnerable_urls = form_detected(url, forms, payloads, session)
         if vulnerable_urls:
             vulnerabilities.extend(vulnerable_urls)
+
+    if None in vulnerabilities:
+        vulnerabilities.remove(None)
 
     logger.info("Finished SQL Injection detection.")
