@@ -103,6 +103,43 @@ def xss_detection(url, vulnerabilities):
 
                     submit_input_names = [input_field.get("name") for input_field in form.find_all("input") if input_field.get("type") == "submit"]
                     
+                    for input_field in form.find_all("input"):
+                        input_name = input_field.get("name")
+                        input_type = input_field.get("type")
+
+                        # "submit" 타입의 입력 필드에 대해 페이로드 주입하지 않음
+                        if input_type != "submit":
+                            for payload in payloads:
+                                form_data[input_name] = payload
+                                print("POST's data : ", form_data)
+
+                                # 옵션 생성
+                                op = webdriver.ChromeOptions()
+                                # 창 숨기는 옵션 추가
+                                op.add_argument("headless")
+
+                                # Selenium을 사용하여 Alert 창 감지
+                                driver = webdriver.Chrome(options=op)
+                                try:
+                                    driver.get(url)
+                                    driver.find_element(By.NAME, input_name).send_keys(payload)
+                                    sleep(5)
+
+                                    for button in submit_input_names:
+                                        driver.find_element(By.NAME, button).click()
+
+                                    # WebDriverWait를 사용하여 Alert이 나타날 때까지 기다림
+                                    alert = WebDriverWait(driver, 3).until(EC.alert_is_present())
+
+                                    # Alert이 나타나면 accept()를 호출하여 OK 버튼을 클릭
+                                    alert.accept()
+                                    vulnerabilities.append(url)
+                                    print(f"XSS 취약점이 발견된 URL (POST 방식): {url} 주입된 페이로드: {payload}")
+                                    driver.quit()
+                                    return
+                                except:
+                                    print('XSS 취약점이 존재하지 않습니다.')
+                                    continue      
                     # textarea가 있는 경우에만 동작
                     textarea = form.find("textarea")
                     if textarea:
@@ -139,47 +176,6 @@ def xss_detection(url, vulnerabilities):
                             except:
                                 print('XSS 취약점이 존재하지 않습니다.')
                                 continue
-
-                    else:
-                        # textarea가 없으면 다른 input 요소에 페이로드 주입
-                        for input_field in form.find_all("input"):
-                            input_name = input_field.get("name")
-                            input_type = input_field.get("type")
-
-                            # "submit" 타입의 입력 필드에 대해 페이로드 주입하지 않음
-                            if input_type != "submit":
-                                for payload in payloads:
-                                    form_data[input_name] = payload
-                                    print("POST's data : ", form_data)
-
-                                    # 옵션 생성
-                                    op = webdriver.ChromeOptions()
-                                    # 창 숨기는 옵션 추가
-                                    op.add_argument("headless")
-
-                                    # Selenium을 사용하여 Alert 창 감지
-                                    driver = webdriver.Chrome(options=op)
-                                    try:
-                                        driver.get(url)
-                                        driver.find_element(By.NAME, input_name).send_keys(payload)
-                                        sleep(5)
-
-                                        for button in submit_input_names:
-                                            driver.find_element(By.NAME, button).click()
-
-                                        # WebDriverWait를 사용하여 Alert이 나타날 때까지 기다림
-                                        alert = WebDriverWait(driver, 3).until(EC.alert_is_present())
-
-                                        # Alert이 나타나면 accept()를 호출하여 OK 버튼을 클릭
-                                        alert.accept()
-                                        vulnerabilities.append(url)
-                                        print(f"XSS 취약점이 발견된 URL (POST 방식): {url} 주입된 페이로드: {payload}")
-                                        driver.quit()
-                                        return
-                                    except:
-                                        print('XSS 취약점이 존재하지 않습니다.')
-                                        continue
-
         driver.quit()
 
         logger.info("Finished XSS detection.")
