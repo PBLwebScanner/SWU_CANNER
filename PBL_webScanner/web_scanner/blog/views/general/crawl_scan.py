@@ -19,12 +19,12 @@ def crawl_and_scan(base_url, options, depth=0, max_depth=3):
     all_xss_vulnerabilities = []
     all_sql_vulnerabilities = []
     all_csrf_vulnerabilities = []
-    detectBool=[]
+    detectBool = []
 
     if depth > max_depth or base_url in visited_urls:
         return all_xss_vulnerabilities, all_sql_vulnerabilities, all_csrf_vulnerabilities
 
-    visited_urls.add(base_url)
+    #visited_urls.add(base_url)
 
     try:
         op = webdriver.ChromeOptions()
@@ -51,14 +51,17 @@ def crawl_and_scan(base_url, options, depth=0, max_depth=3):
                     links_to_visit.add(urljoin(base_url, window_open_url))
 
         for url in links_to_visit:
-            sub_xss_vulns, sub_sql_vulns, sub_csrf_vulns = crawl_and_scan(url, options, depth+1, max_depth)
-            all_xss_vulnerabilities.extend(sub_xss_vulns)
-            all_sql_vulnerabilities.extend(sub_sql_vulns)
-            all_csrf_vulnerabilities.extend(sub_csrf_vulns)
+            if url not in visited_urls:
+                
+                sub_xss_vulns, sub_sql_vulns, sub_csrf_vulns = crawl_and_scan(url, options, depth+1, max_depth)
+                all_xss_vulnerabilities.extend(sub_xss_vulns)
+                all_sql_vulnerabilities.extend(sub_sql_vulns)
+                all_csrf_vulnerabilities.extend(sub_csrf_vulns)
+                visited_urls.add(url)
 
         threads = []
 
-        for url in visited_urls:
+        for url in links_to_visit:  # visited_urls 대신 links_to_visit를 순회
             print(f"Checking URL: {url}")
 
             if "전체" in options or "XSS" in options or "CSRF" in options:
@@ -66,7 +69,9 @@ def crawl_and_scan(base_url, options, depth=0, max_depth=3):
                 thread.start()
                 threads.append(thread)
 
-                xss_detected=bool(detectBool)
+                thread.join()
+
+                xss_detected = bool(detectBool)
                 if "XSS" in options:
                     print(f"XSS Detected in {url}: {xss_detected}")
 
@@ -74,6 +79,8 @@ def crawl_and_scan(base_url, options, depth=0, max_depth=3):
                     thread = threading.Thread(target=csrf_detection, args=(url, all_csrf_vulnerabilities))
                     thread.start()
                     threads.append(thread)
+
+                    thread.join()
 
                     csrf_detected = bool(all_csrf_vulnerabilities)
                     print(f"CSRF Detected in {url}: {csrf_detected}")
