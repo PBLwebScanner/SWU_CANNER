@@ -10,6 +10,11 @@ from urllib.parse import urljoin, urlencode, urlparse, parse_qs, urlsplit, urlun
 #이미 검사한 url을 저장 
 visited_urls = set()
 
+all_directory_vulnerabilities = []
+all_xss_vulnerabilities = []
+all_sql_vulnerabilities = []
+all_csrf_vulnerabilities = []
+
 def crawl_and_scan(base_url, options, depth=0, max_depth=3):
     if depth > max_depth or base_url in visited_urls:
         return [], [], []   # 최대 깊이를 초과하면 탐색을 중단&이미 검사한 url이면 검사 건너뜀
@@ -47,6 +52,17 @@ def crawl_and_scan(base_url, options, depth=0, max_depth=3):
                 window_open_url = onclick_value.split("'")[1] # 인덱스 1에 해당하는 값
                 visited_urls.add(urljoin(base_url, window_open_url))
         
+        # 재귀 호출로 하위 링크 탐색
+        links = list(visited_urls)  # visited_urls 세트를 리스트로 변환
+        for url in links:
+            # URL이 이미 visited_urls 세트에 있다면 건너뜀
+            if url in visited_urls:
+                continue
+            sub_xss_vulns, sub_sql_vulns, sub_csrf_vulns = crawl_and_scan(url, options, depth+1, max_depth)
+            all_xss_vulnerabilities.extend(sub_xss_vulns)
+            all_sql_vulnerabilities.extend(sub_sql_vulns)
+            all_csrf_vulnerabilities.extend(sub_csrf_vulns)
+            visited_urls.add(url)  # URL을 visited_urls 세트에 추가
 
         # 출력을 위해 links 변수에 들어간 URL들을 확인
         print("Final URLs in the links variable:")
@@ -59,8 +75,8 @@ def crawl_and_scan(base_url, options, depth=0, max_depth=3):
 
         threads = []
         
-        if base_url not in visited_urls:
-            visited_urls.add(base_url)
+        #if base_url not in visited_urls:
+            #visited_urls.add(base_url)
 
         for url in visited_urls:
             print(f"Checking URL: {url}")
@@ -104,13 +120,6 @@ def crawl_and_scan(base_url, options, depth=0, max_depth=3):
     
     finally:
 
-        # 재귀 호출로 하위 링크 탐색
-        for url in visited_urls:
-            sub_xss_vulns, sub_sql_vulns, sub_csrf_vulns = crawl_and_scan(url, options, depth+1, max_depth)
-            all_xss_vulnerabilities.extend(sub_xss_vulns)
-            all_sql_vulnerabilities.extend(sub_sql_vulns)
-            all_csrf_vulnerabilities.extend(sub_csrf_vulns)
-
         # Selenium 웹 드라이버 종료
         driver.quit()
         
@@ -135,14 +144,22 @@ def no_crawl(base_url, options):
 def scan(base_url, options):
     all_vulnerabilities = []
 
-    if "전체" in options or "Directory Indexing" in options:
-        all_directory_vulnerabilities = no_crawl(base_url, options)
-        all_vulnerabilities.extend(all_directory_vulnerabilities)
+    # 각각의 함수를 별도의 스레드에서 실행
+    no_crawl_thread = threading.Thread(target=no_crawl, args=(base_url, options))
+    crawl_and_scan_thread = threading.Thread(target=crawl_and_scan, args=(base_url, options))
 
-    if "전체" in options or "XSS" in options or "CSRF" in options or "SQL Injection" in options:
-        all_xss_vulnerabilities, all_sql_vulnerabilities, all_csrf_vulnerabilities = crawl_and_scan(base_url, options)
-        all_vulnerabilities.extend(all_xss_vulnerabilities)
-        all_vulnerabilities.extend(all_sql_vulnerabilities)
-        all_vulnerabilities.extend(all_csrf_vulnerabilities)
+    # 스레드 시작
+    no_crawl_thread.start()
+    crawl_and_scan_thread.start()
+
+    # 모든 스레드가 완료될 때까지 기다림
+    no_crawl_thread.join()
+    crawl_and_scan_thread.join()
+
+    # 스레드에서 수집한 결과를 모두 합침
+    all_vulnerabilities.extend(all_directory_vulnerabilities)
+    all_vulnerabilities.extend(all_xss_vulnerabilities)
+    all_vulnerabilities.extend(all_sql_vulnerabilities)
+    all_vulnerabilities.extend(all_csrf_vulnerabilities)
 
     return all_vulnerabilities
