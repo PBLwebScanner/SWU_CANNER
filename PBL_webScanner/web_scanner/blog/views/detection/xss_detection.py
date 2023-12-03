@@ -15,7 +15,7 @@ from selenium import webdriver
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def xss_detection(url, vulnerabilities):
+def xss_detection(url, vulnerabilities, detectBool):
     logger.info("Starting XSS detection...")
 
     fname = "blog/payloads/xss.txt"
@@ -41,6 +41,7 @@ def xss_detection(url, vulnerabilities):
         forms = soup.find_all("form")
         if not forms:
             print("폼이 없습니다.")
+            detectBool.clear()
             return
 
         if forms:
@@ -88,6 +89,7 @@ def xss_detection(url, vulnerabilities):
                                     # Alert이 나타나면 accept()를 호출하여 OK 버튼을 클릭
                                     alert.accept()
                                     vulnerabilities.append(url)
+                                    detectBool.append(url)
                                     print(f"XSS 취약점이 발견된 URL (GET 방식): {url} 주입된 페이로드: {payload}")
                                     driver.quit()
                                     return
@@ -134,6 +136,7 @@ def xss_detection(url, vulnerabilities):
                                     # Alert이 나타나면 accept()를 호출하여 OK 버튼을 클릭
                                     alert.accept()
                                     vulnerabilities.append(url)
+                                    detectBool.append(url)
                                     print(f"XSS 취약점이 발견된 URL (POST 방식): {url} 주입된 페이로드: {payload}")
                                     driver.quit()
                                     return
@@ -170,6 +173,7 @@ def xss_detection(url, vulnerabilities):
                                 # Alert이 나타나면 accept()를 호출하여 OK 버튼을 클릭
                                 alert.accept()
                                 vulnerabilities.append(url)
+                                detectBool.append(url)
                                 print(f"XSS 취약점이 발견된 URL (POST 방식): {url} 주입된 페이로드: {payload}")
                                 driver.quit()
                                 return
@@ -181,4 +185,5 @@ def xss_detection(url, vulnerabilities):
         logger.info("Finished XSS detection.")
 
     except RequestException as e:
+        detectBool.clear()
         print(f"Error during HTTP request: {e}")

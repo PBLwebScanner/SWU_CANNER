@@ -19,6 +19,7 @@ def crawl_and_scan(base_url, options, depth=0, max_depth=3):
     all_xss_vulnerabilities = []
     all_sql_vulnerabilities = []
     all_csrf_vulnerabilities = []
+    detectBool=[]
 
     if depth > max_depth or base_url in visited_urls:
         return all_xss_vulnerabilities, all_sql_vulnerabilities, all_csrf_vulnerabilities
@@ -61,11 +62,11 @@ def crawl_and_scan(base_url, options, depth=0, max_depth=3):
             print(f"Checking URL: {url}")
 
             if "전체" in options or "XSS" in options or "CSRF" in options:
-                thread = threading.Thread(target=xss_detection, args=(url, all_xss_vulnerabilities))
+                thread = threading.Thread(target=xss_detection, args=(url, all_xss_vulnerabilities, detectBool))
                 thread.start()
                 threads.append(thread)
 
-                xss_detected = bool(all_xss_vulnerabilities)
+                xss_detected=bool(detectBool)
                 if "XSS" in options:
                     print(f"XSS Detected in {url}: {xss_detected}")
 
