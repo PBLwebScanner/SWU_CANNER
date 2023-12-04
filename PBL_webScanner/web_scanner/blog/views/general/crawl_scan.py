@@ -32,7 +32,6 @@ def crawl(url):
         for anchor in soup.find_all("a", href=True):
             href = anchor.get("href")
             result = urljoin(url, href)
-            # if result and result.startswith(url) and result not in visited_urls:
             if result and result.startswith(url):
                 links_to_visit.append(result)
 
@@ -80,48 +79,11 @@ def crawl_and_scan(base_url, options):
             local_visited_urls.update(base_url)
             crawl_urls.update(visited_urls)
 
-    # if depth > max_depth or base_url in visited_urls:
-    #     return all_xss_vulnerabilities, all_sql_vulnerabilities, all_csrf_vulnerabilities
 
-    #visited_urls.add(base_url)
-
-    # try:
-    #     op = webdriver.ChromeOptions()
-    #     op.add_argument('headless')
-    #     driver = webdriver.Chrome(options=op)
-
-    #     driver.get(base_url)
-    #     html_content = driver.page_source
-    #     soup = BeautifulSoup(html_content, "html.parser")
-
-    #     links_to_visit = set()
-
-    #     for anchor in soup.find_all("a", href=True):
-    #         href = anchor.get("href")
-    #         result = urljoin(base_url, href)
-    #         if result and result.startswith(base_url) and result not in visited_urls:
-    #             links_to_visit.add(result)
-
-    #     for element in soup.find_all(lambda tag: tag.has_attr('onclick')):
-    #         onclick_value = element['onclick']
-    #         if 'window.open(' in onclick_value:
-    #             window_open_url = onclick_value.split("'")[1]
-    #             if window_open_url not in visited_urls:
-    #                 links_to_visit.add(urljoin(base_url, window_open_url))
-
-    #     for url in links_to_visit:
-    #         if url not in visited_urls:
-                
-    #             sub_xss_vulns, sub_sql_vulns, sub_csrf_vulns = crawl_and_scan(url, options, depth+1, max_depth)
-    #             all_xss_vulnerabilities.extend(sub_xss_vulns)
-    #             all_sql_vulnerabilities.extend(sub_sql_vulns)
-    #             all_csrf_vulnerabilities.extend(sub_csrf_vulns)
-    #             visited_urls.add(url)
 
     threads = []
 
-    #     for url in links_to_visit:  # visited_urls 대신 links_to_visit를 순회
-    #         print(f"Checking URL: {url}")
+
 
     for url in visited_urls:
 
@@ -159,12 +121,6 @@ def crawl_and_scan(base_url, options):
         for thread in threads:
             thread.join()
 
-    # except Exception as e:
-    #     print(f"Error while crawling and scanning: {e}")
-    #     return [], [], []
-
-    # finally:
-    #     driver.quit()
 
     return all_xss_vulnerabilities, all_sql_vulnerabilities, all_csrf_vulnerabilities
 
