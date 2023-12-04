@@ -5,7 +5,7 @@ from ..detection.csrf_detection import csrf_detection
 from ..detection.directory_indexing_detection import directory_indexing_detection
 from ..detection.sql_injection_detection import sql_injection_detection
 from ..detection.xss_detection import xss_detection
-from urllib.parse import urljoin, urlencode, urlparse, parse_qs, urlsplit, urlunsplit
+from urllib.parse import urljoin
 
 #이미 검사한 url을 저장 
 visited_urls = set()
@@ -14,86 +14,38 @@ all_directory_vulnerabilities = []
 all_xss_vulnerabilities = []
 all_sql_vulnerabilities = []
 all_csrf_vulnerabilities = []
+max_depth=3
 
-def crawl_and_scan(base_url, options, depth=0, max_depth=3):
-    all_xss_vulnerabilities = []
-    all_sql_vulnerabilities = []
-    all_csrf_vulnerabilities = []
-    detectBool = []
-
-    if depth > max_depth or base_url in visited_urls:
-        return all_xss_vulnerabilities, all_sql_vulnerabilities, all_csrf_vulnerabilities
-
-    visited_urls.add(base_url)
-
+def crawl(url):
     try:
+        print(f'crawl 시작: {url}')
         op = webdriver.ChromeOptions()
         op.add_argument('headless')
         driver = webdriver.Chrome(options=op)
 
-        driver.get(base_url)
+        driver.get(url)
         html_content = driver.page_source
         soup = BeautifulSoup(html_content, "html.parser")
 
-        links_to_visit = set()
+        links_to_visit = []
 
         for anchor in soup.find_all("a", href=True):
             href = anchor.get("href")
-            result = urljoin(base_url, href)
-            if result and result.startswith(base_url) and result not in visited_urls:
-                links_to_visit.add(result)
+            result = urljoin(url, href)
+            if result and result.startswith(url):
+                links_to_visit.append(result)
 
         for element in soup.find_all(lambda tag: tag.has_attr('onclick')):
             onclick_value = element['onclick']
             if 'window.open(' in onclick_value:
                 window_open_url = onclick_value.split("'")[1]
-                if window_open_url not in visited_urls:
-                    links_to_visit.add(urljoin(base_url, window_open_url))
+                # if window_open_url not in visited_urls:
+                links_to_visit.append(urljoin(url, window_open_url))
+        
+        visited_urls.update(links_to_visit)
 
-        for url in links_to_visit:
-            sub_xss_vulns, sub_sql_vulns, sub_csrf_vulns = crawl_and_scan(url, options, depth+1, max_depth)
-            all_xss_vulnerabilities.extend(sub_xss_vulns)
-            all_sql_vulnerabilities.extend(sub_sql_vulns)
-            all_csrf_vulnerabilities.extend(sub_csrf_vulns)
-
-        threads = []
-
-        for url in visited_urls:
+        for url in visited_urls:  # visited_urls 대신 links_to_visit를 순회
             print(f"Checking URL: {url}")
-
-            if "전체" in options or "XSS" in options or "CSRF" in options:
-                thread = threading.Thread(target=xss_detection, args=(url, all_xss_vulnerabilities, detectBool))
-                thread.start()
-                threads.append(thread)
-
-                thread.join()
-
-                xss_detected = bool(detectBool)
-                if "XSS" in options:
-                    print(f"XSS Detected in {url}: {xss_detected}")
-
-                if xss_detected and ("전체" in options or "CSRF" in options):
-                    thread = threading.Thread(target=csrf_detection, args=(url, all_csrf_vulnerabilities))
-                    thread.start()
-                    threads.append(thread)
-
-                    thread.join()
-
-                    csrf_detected = bool(all_csrf_vulnerabilities)
-                    print(f"CSRF Detected in {url}: {csrf_detected}")
-                elif "CSRF" in options:
-                    print("XSS 취약점이 탐지되지 않아 CSRF 공격 불가능")
-
-            if "전체" in options or "SQL Injection" in options:
-                thread = threading.Thread(target=sql_injection_detection, args=(url, all_sql_vulnerabilities))
-                threads.append(thread)
-                thread.start()
-
-                sql_injection_detected = bool(all_sql_vulnerabilities)
-                print(f"SQL Injection Detected in {url}: {sql_injection_detected}")
-
-        for thread in threads:
-            thread.join()
 
     except Exception as e:
         print(f"Error while crawling and scanning: {e}")
@@ -101,6 +53,74 @@ def crawl_and_scan(base_url, options, depth=0, max_depth=3):
 
     finally:
         driver.quit()
+
+    return
+
+
+def crawl_and_scan(base_url, options):
+    all_xss_vulnerabilities = []
+    all_sql_vulnerabilities = []
+    all_csrf_vulnerabilities = []
+    detectBool = []
+    crawl_urls = set()
+    local_visited_urls = set()
+
+    for _ in range(max_depth):
+        if crawl_urls:
+            for urls in crawl_urls:
+                if urls not in local_visited_urls:
+                    print(f'{urls}: crawl{_}')
+                    crawl(urls)
+                    local_visited_urls.add(urls)
+            crawl_urls.update(visited_urls)
+        else:
+            print(f'{base_url}: crawl{_}')
+            crawl(base_url)
+            local_visited_urls.update(base_url)
+            crawl_urls.update(visited_urls)
+
+
+
+    threads = []
+
+
+
+    for url in visited_urls:
+
+        if "전체" in options or "XSS" in options or "CSRF" in options:
+            thread = threading.Thread(target=xss_detection, args=(url, all_xss_vulnerabilities, detectBool))
+            thread.start()
+            threads.append(thread)
+
+            thread.join()
+
+            xss_detected = bool(detectBool)
+            if "XSS" in options:
+                print(f"XSS Detected in {url}: {xss_detected}")
+
+            if xss_detected and ("전체" in options or "CSRF" in options):
+                thread = threading.Thread(target=csrf_detection, args=(url, all_csrf_vulnerabilities))
+                thread.start()
+                threads.append(thread)
+
+                thread.join()
+
+                csrf_detected = bool(all_csrf_vulnerabilities)
+                print(f"CSRF Detected in {url}: {csrf_detected}")
+            elif "CSRF" in options:
+                print("XSS 취약점이 탐지되지 않아 CSRF 공격 불가능")
+
+        if "전체" in options or "SQL Injection" in options:
+            thread = threading.Thread(target=sql_injection_detection, args=(url, all_sql_vulnerabilities))
+            threads.append(thread)
+            thread.start()
+
+            sql_injection_detected = bool(all_sql_vulnerabilities)
+            print(f"SQL Injection Detected in {url}: {sql_injection_detected}")
+
+        for thread in threads:
+            thread.join()
+
 
     return all_xss_vulnerabilities, all_sql_vulnerabilities, all_csrf_vulnerabilities
 

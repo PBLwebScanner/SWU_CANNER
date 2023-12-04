@@ -216,8 +216,8 @@ def url_detection(url, payloads, session):
         parsed_url = urlparse(url)
         query_params = parse_qs(parsed_url.query)
 
-        split_url = urlsplit(url)
-        no_query_url = urlunsplit((split_url.scheme, split_url.netloc, split_url.path, '', ''))
+        # split_url = urlsplit(url)
+        # no_query_url = urlunsplit((split_url.scheme, split_url.netloc, split_url.path, '', ''))
             
         for payload in payloads:
             if query_params is not None:  # 추가된 None 체크
@@ -231,7 +231,8 @@ def url_detection(url, payloads, session):
                     for regex in regex_list:
                         if regex.search(get_response.text):
                             print(f"{url}: {dbms} 취약점 발견1")
-                            return no_query_url
+                            # return no_query_url
+                            return url
             else:
             
                 for payload in payloads:
@@ -242,7 +243,8 @@ def url_detection(url, payloads, session):
                         for regex in regex_list:
                             if regex.search(get_response.text):
                                 print(f"{url}: {dbms} 취약점 발견2")
-                                return no_query_url
+                                # return no_query_url
+                                return url
 
     else:
         for payload in payloads:
@@ -294,12 +296,13 @@ def form_detected(url, forms, payloads, session):
                             
                 get_response = session.get(form_action, params=update_payload)
                 if 'logout' in get_response.text.lower():
+                    print(f'{url}: SQL 취약점 발견3')
                     vulnerable_urls.append(form_action)
                 else:
                     for dbms, regex_list in DBMS_ERROR_PATTERNS.items():
                         for regex in regex_list:
                             if regex.search(get_response.text):
-                                print(f"{url}: {dbms} 취약점 발견3")
+                                print(f"{url}: {dbms} 취약점 발견4")
                                 vulnerable_urls.append(form_action)
 
 
@@ -327,12 +330,13 @@ def form_detected(url, forms, payloads, session):
                 logout_links = [link for link in all_links if 'logout' in str(link).lower()]
 
                 if logout_links:
+                    print(f'{url}: SQL 취약점 발견5')
                     vulnerable_urls.append(form_action)
                 else:
                     for dbms, regex_list in DBMS_ERROR_PATTERNS.items():
                         for regex in regex_list:
                             if regex.search(de_response.text):
-                                print(f"{url}: {dbms} 취약점 발견4")
+                                print(f"{url}: {dbms} 취약점 발견6")
                                 vulnerable_urls.append(form_action)
         
 

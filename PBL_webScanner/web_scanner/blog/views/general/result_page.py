@@ -34,7 +34,7 @@ def result_page(request):
         set_xss_vulnerabilities = list(set_xss_vulnerabilities)
         set_sql_vulnerabilities = set(sql_vulnerabilities)
         set_sql_vulnerabilities = list(set_sql_vulnerabilities)
-        set_csrf_vulnerabilities = set(set_csrf_vulnerabilities)
+        set_csrf_vulnerabilities = set(csrf_vulnerabilities)
         set_csrf_vulnerabilities = list(set_csrf_vulnerabilities)
 
         # 결과 확인
@@ -126,12 +126,11 @@ def result_page(request):
             'xss_detected': xss_detected,  
             'sql_injection_detected': sql_injection_detected,  
             'directory_indexing_detected': directory_indexing_detected,
-            'csrf_detected': csrf_detected,
             'csrf_detected': set_csrf_vulnerabilities,
             'xss_vul_list': set_xss_vulnerabilities,
             'sql_vul_list': set_sql_vulnerabilities,
             'directory_vul_list': directory_vulnerabilities,
-            'csrf_vul_list': csrf_vulnerabilities,
+            'csrf_vul_list': set_csrf_vulnerabilities,
             'score': score,
             'law1': law1,
             'law2': law2,
