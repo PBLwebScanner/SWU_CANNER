@@ -230,7 +230,7 @@ def url_detection(url, payloads, session):
                 for dbms, regex_list in DBMS_ERROR_PATTERNS.items():
                     for regex in regex_list:
                         if regex.search(get_response.text):
-                            print(f"{url}: {dbms} 취약점 발견")
+                            print(f"{url}: {dbms} 취약점 발견1")
                             return no_query_url
             else:
             
@@ -241,7 +241,7 @@ def url_detection(url, payloads, session):
                     for dbms, regex_list in DBMS_ERROR_PATTERNS.items():
                         for regex in regex_list:
                             if regex.search(get_response.text):
-                                print(f"{url}: {dbms} 취약점 발견")
+                                print(f"{url}: {dbms} 취약점 발견2")
                                 return no_query_url
 
     else:
@@ -253,7 +253,7 @@ def url_detection(url, payloads, session):
                 for regex in regex_list:
                     if regex.search(get_response.text):
                         print(f"{url}: {dbms} 취약점 발견")
-                        return no_query_url
+                        return url
     
     return
 
@@ -299,7 +299,7 @@ def form_detected(url, forms, payloads, session):
                     for dbms, regex_list in DBMS_ERROR_PATTERNS.items():
                         for regex in regex_list:
                             if regex.search(get_response.text):
-                                print(f"{url}: {dbms} 취약점 발견")
+                                print(f"{url}: {dbms} 취약점 발견3")
                                 vulnerable_urls.append(form_action)
 
 
@@ -332,7 +332,7 @@ def form_detected(url, forms, payloads, session):
                     for dbms, regex_list in DBMS_ERROR_PATTERNS.items():
                         for regex in regex_list:
                             if regex.search(de_response.text):
-                                print(f"{url}: {dbms} 취약점 발견")
+                                print(f"{url}: {dbms} 취약점 발견4")
                                 vulnerable_urls.append(form_action)
         
 

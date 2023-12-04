@@ -34,6 +34,8 @@ def result_page(request):
         set_xss_vulnerabilities = list(set_xss_vulnerabilities)
         set_sql_vulnerabilities = set(sql_vulnerabilities)
         set_sql_vulnerabilities = list(set_sql_vulnerabilities)
+        set_csrf_vulnerabilities = set(set_csrf_vulnerabilities)
+        set_csrf_vulnerabilities = list(set_csrf_vulnerabilities)
 
         # 결과 확인
         xss_detected = bool(xss_vulnerabilities)
@@ -125,6 +127,7 @@ def result_page(request):
             'sql_injection_detected': sql_injection_detected,  
             'directory_indexing_detected': directory_indexing_detected,
             'csrf_detected': csrf_detected,
+            'csrf_detected': set_csrf_vulnerabilities,
             'xss_vul_list': set_xss_vulnerabilities,
             'sql_vul_list': set_sql_vulnerabilities,
             'directory_vul_list': directory_vulnerabilities,
@@ -149,6 +152,7 @@ def result_page(request):
         update_global_context('csrf_detected', csrf_detected)
         update_global_context('xss_vul_list', set_xss_vulnerabilities)
         update_global_context('sql_vul_list', set_sql_vulnerabilities)
+        update_global_context('csrf_vul_list', set_csrf_vulnerabilities)
         update_global_context('directory_vul_list', directory_vulnerabilities)
         update_global_context('csrf_vul_list', csrf_vulnerabilities)
         update_global_context('score', score)
