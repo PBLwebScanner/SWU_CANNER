@@ -5,7 +5,7 @@ from ..detection.csrf_detection import csrf_detection
 from ..detection.directory_indexing_detection import directory_indexing_detection
 from ..detection.sql_injection_detection import sql_injection_detection
 from ..detection.xss_detection import xss_detection
-from urllib.parse import urljoin, urlencode, urlparse, parse_qs, urlsplit, urlunsplit
+from urllib.parse import urljoin
 
 #이미 검사한 url을 저장 
 visited_urls = set()
@@ -14,7 +14,7 @@ all_directory_vulnerabilities = []
 all_xss_vulnerabilities = []
 all_sql_vulnerabilities = []
 all_csrf_vulnerabilities = []
-max_depth=2
+max_depth=3
 
 def crawl(url):
     try:
@@ -64,15 +64,20 @@ def crawl_and_scan(base_url, options):
     all_csrf_vulnerabilities = []
     detectBool = []
     crawl_urls = set()
+    local_visited_urls = set()
 
     for _ in range(max_depth):
         if crawl_urls:
             for urls in crawl_urls:
-                print(f'{urls}: crawl{_}')
-                crawl(urls)
+                if urls not in local_visited_urls:
+                    print(f'{urls}: crawl{_}')
+                    crawl(urls)
+                    local_visited_urls.add(urls)
+            crawl_urls.update(visited_urls)
         else:
             print(f'{base_url}: crawl{_}')
             crawl(base_url)
+            local_visited_urls.update(base_url)
             crawl_urls.update(visited_urls)
 
     # if depth > max_depth or base_url in visited_urls:
