@@ -53,7 +53,7 @@ def xss_detection(url, vulnerabilities, detectBool):
                 else:
                     form_action = urljoin(url, form_action)
                     
-                form_method = form.get("method").lower()
+                form_method = form.get("method")
 
                 if form_method is None:
                     form_method = "get"
