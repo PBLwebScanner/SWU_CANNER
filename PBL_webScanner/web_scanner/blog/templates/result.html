@@ -26,10 +26,10 @@
 </head>
 <body>
 
-
-
-
-
+    <!-- <h1>결과페이지</h1>
+    <p>URL: {{ url }}</p>
+    <p>선택한 옵션들: {{ options|join:", " }}</p>
+    <p>처리된 결과 데이터: {% include 'report.html' %}</p> -->
 
     <form method="post" action="{% url 'send_result' %}" onsubmit="return prepareData()">
         {% csrf_token %}

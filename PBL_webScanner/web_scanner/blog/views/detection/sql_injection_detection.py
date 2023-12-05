@@ -350,6 +350,8 @@ def sql_injection_detection(url, vulnerabilities):
         content = f.readlines()
     payloads = [x.strip() for x in content]
 
+    vuln_url = []
+
     # 세션 시작
     session = requests.Session()
 
@@ -358,7 +360,7 @@ def sql_injection_detection(url, vulnerabilities):
 
     vulnerable_urls = url_detection(url, payloads, session)
     if vulnerable_urls:
-        vulnerabilities.append(vulnerable_urls)
+        vuln_url.append(vulnerable_urls)
 
     # 폼 요소 찾기
     forms = soup.find_all("form")
@@ -366,9 +368,16 @@ def sql_injection_detection(url, vulnerabilities):
     if forms:
         vulnerable_urls = form_detected(url, forms, payloads, session)
         if vulnerable_urls:
-            vulnerabilities.extend(vulnerable_urls)
+            vuln_url.extend(vulnerable_urls)
 
-    if None in vulnerabilities:
-        vulnerabilities.remove(None)
+    if None in vuln_url:
+        vuln_url.remove(None)
+    
+    if vuln_url:
+        for url in vuln_url:
+            split_url = urlsplit(url)
+            no_query_url = urlunsplit((split_url.scheme, split_url.netloc, split_url.path, '', ''))
+            vulnerabilities.append(no_query_url)
+
 
     logger.info("Finished SQL Injection detection.")

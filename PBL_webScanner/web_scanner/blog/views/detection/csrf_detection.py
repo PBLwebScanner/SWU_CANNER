@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import re
 import logging
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 import json
 from collections import Counter
 import math
@@ -76,7 +77,9 @@ def csrf_detection(url, vulnerabilities):
             if not csrf_token:
                 print("CSRF토큰이 없는 취약한 사이트입니다.")
                 # vulnerabilities.extend(url)
-                vulnerabilities.append(url)
+                split_url = urlsplit(url)
+                no_query_url = urlunsplit((split_url.scheme, split_url.netloc, split_url.path, '', ''))
+                vulnerabilities.append(no_query_url)
 
         elif csrf_token and re.match(r'^[\w\-_]+$', csrf_token):
             print(f"CSRF Token Found: {csrf_token}")
@@ -89,16 +92,22 @@ def csrf_detection(url, vulnerabilities):
                     print(f"SameSite 속성이 올바르게 설정되었습니다: {same_site_value}")
                 else:
                     print(f"SameSite 속성이 설정되어 있지만, 올바르지 않은 값입니다: {same_site_value}")
-                    vulnerabilities.append(url)
+                    split_url = urlsplit(url)
+                    no_query_url = urlunsplit((split_url.scheme, split_url.netloc, split_url.path, '', ''))
+                    vulnerabilities.append(no_query_url)
                     return
             else:
                 print("SameSite 속성이 설정되어 있지 않습니다.")
-                vulnerabilities.append(url)
+                split_url = urlsplit(url)
+                no_query_url = urlunsplit((split_url.scheme, split_url.netloc, split_url.path, '', ''))
+                vulnerabilities.append(no_query_url)
                 return
             
             if entropy(csrf_token) < MIN_ENTROPY:
                 print(f"예측 가능한 취약한 토큰입니다 (Entropy: {entropy(csrf_token)})")
-                vulnerabilities.append(url)
+                split_url = urlsplit(url)
+                no_query_url = urlunsplit((split_url.scheme, split_url.netloc, split_url.path, '', ''))
+                vulnerabilities.append(no_query_url)
             else:
                 print(entropy(csrf_token))
                 if strength(csrf_token) > 20:
@@ -114,14 +123,18 @@ def csrf_detection(url, vulnerabilities):
                             for name in element['matches']:
                                 matches.append(name)
                     if matches:
-                        vulnerabilities.append(url)
+                        split_url = urlsplit(url)
+                        no_query_url = urlunsplit((split_url.scheme, split_url.netloc, split_url.path, '', ''))
+                        vulnerabilities.append(no_query_url)
                         print("토큰이 만들어진 해시함수가 예측되므로 취약한 토큰입니다. : {matches}")
 
                     else:
                         print("견고한 토큰입니다.")
                 else:
                     print(f"문자열의 복잡성이 낮은 취약한 토큰입니다.")
-                    vulnerabilities.append(url)
+                    split_url = urlsplit(url)
+                    no_query_url = urlunsplit((split_url.scheme, split_url.netloc, split_url.path, '', ''))
+                    vulnerabilities.append(no_query_url)
 
         logger.info("Finished CSRF detection.")
 
