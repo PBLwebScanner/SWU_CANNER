@@ -2,7 +2,7 @@
 <br>
 
 ## 💫 **Description:**
-SWU_CANNER is a web scanner that addresses the shortcomings of existing web scanners and raises awareness of personal information leakage incidents due to vulnerabilities. The tool automatically identifies personal information leakage vulnerabilities on websites and generates a comprehensive report on the identified vulnerabilities and their contents.
+SWU_CANNER is a web scanner that addresses the shortcomings of existing web scanners and raises awareness of personal information leakage incidents due to vulnerabilities. <br>The tool automatically identifies personal information leakage vulnerabilities on websites and generates a comprehensive report on the identified vulnerabilities and their contents.
 <br>
 <br>
 
