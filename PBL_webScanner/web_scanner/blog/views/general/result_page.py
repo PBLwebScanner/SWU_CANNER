@@ -151,6 +151,7 @@ def result_page(request):
         update_global_context('csrf_detected', csrf_detected)
         update_global_context('xss_vul_list', set_xss_vulnerabilities)
         update_global_context('sql_vul_list', set_sql_vulnerabilities)
+        update_global_context('csrf_vul_list', set_csrf_vulnerabilities)
         update_global_context('directory_vul_list', directory_vulnerabilities)
         update_global_context('csrf_vul_list', csrf_vulnerabilities)
         update_global_context('score', score)
