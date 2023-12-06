@@ -1,48 +1,47 @@
 # SWU_CANNER
 <br>
 
-## 💫 ***Description***: 
-SWU_CANNER is a web scanner that addresses the shortcomings of existing web scanners and raises awareness of personal information leakage incidents due to vulnerabilities. 
-<br>The tool automatically identifies personal information leakage vulnerabilities on websites and generates a comprehensive report on the identified vulnerabilities and their contents.
+## 💫 **Description:**
+SWU_CANNER is a web scanner that addresses the shortcomings of existing web scanners and raises awareness of personal information leakage incidents due to vulnerabilities. The tool automatically identifies personal information leakage vulnerabilities on websites and generates a comprehensive report on the identified vulnerabilities and their contents.
 <br>
 <br>
 
-## 💫 ***Features***:
-- __Web Site__ :
-- [x] Using Scanner Modules
-- [x] Using Code Analysis Modules
-- [x] Checklist for Printing out Violated Laws 
-- [x] Printing out the Report
-- [x] Sending an Email
+## 💫 **Features:**
+- **Web Site:**
+  - [x] Using Scanner Modules
+  - [x] Using Code Analysis Modules
+  - [x] Checklist for Printing out Violated Laws
+  - [x] Printing out the Report
+  - [x] Sending an Email
 <br>
 
-- __Scanner Modules__ :
-- [x] SQL Injection (SQLi)
-- [x] Cross-Site Scripting (XSS) 
-- [x] Directory Indexing
-- [x] Cross-Site Request Forgery (CSRF)
+- **Scanner Modules:**
+  - [x] SQL Injection (SQLi)
+  - [x] Cross-Site Scripting (XSS)
+  - [x] Directory Indexing
+  - [x] Cross-Site Request Forgery (CSRF)
 <br>
 
-- __Code Analysis Modules__ :
-- [x] Code Analysis
+- **Code Analysis Modules:**
+  - [x] Code Analysis
 <br>
 
-- __Report__ :
-- [x] CVE
-- [x] How To Patch
-- [x] Violation Of The Law
-- [x] Cases
+- **Report:**
+  - [x] CVE
+  - [x] How To Patch
+  - [x] Violation Of The Law
+  - [x] Cases
 <br>
 
-## 💫 ***Development Environment***:
-- [x] Front-End : HTML/CSS
-- [x] Back-End : Django
-- [x] API : OpenAI
-- [x] Collaborative Software : GitHub, Notion
-- [x] Code Editor : Visual Studio Code
+## 💫 **Development Environment:**
+- [x] Front-End: HTML/CSS
+- [x] Back-End: Django
+- [x] API: OpenAI
+- [x] Collaborative Software: GitHub, Notion
+- [x] Code Editor: Visual Studio Code
 <br>
 
-## 💫 ***About Our Team***:
+## 💫 **About Our Team:**
 #### [Songha Lee](https://github.com/Lee-Song-Ha)
 - [x] Team Leader
 - [x] SQLi Detection
@@ -53,16 +52,16 @@ SWU_CANNER is a web scanner that addresses the shortcomings of existing web scan
 - [x] XSS Detection
 - [x] CSRF Detection
 - [x] Converting a Report to PDF
-- [x] Downloading a PDF 
+- [x] Downloading a PDF
 
 #### [Yunsol Shin](https://github.com/yunddorri)
-- [x] WebSite Development/Design
+- [x] Website Development/Design
 - [x] Code Analysis
 - [x] Mapping Vulnerabilities With Privacy Laws
 - [x] Sending an Email
 
 #### [Heeyun Heo](https://github.com/Heeyun0724)
-- [x] WebSite Development/Design
+- [x] Website Development/Design
 - [x] Code Analysis
 - [x] Mapping Vulnerabilities With Privacy Laws
 - [x] Simultaneous Implementation of Scanner Functions
