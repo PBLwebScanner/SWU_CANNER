@@ -2,15 +2,23 @@
 <br>
 
 ## 💫 ***Description***: 
-SWU_CANNER is a web scanner that complements the shortcomings of existing web scanners and raises awareness of personal information leakage incidents that may occur due to vulnerabilities.<br>
-Our web scanner automatically diagnoses personal information leakage vulnerabilities on websites and automatically creates a report on the vulnerabilities and their contents.
+SWU_CANNER is a web scanner that addresses the shortcomings of existing web scanners and raises awareness of personal information leakage incidents due to vulnerabilities. 
+<br>The tool automatically identifies personal information leakage vulnerabilities on websites and generates a comprehensive report on the identified vulnerabilities and their contents.
 <br>
 <br>
 
 ## 💫 ***Features***:
+- __Web Site__ :
+- [x] Using Scanner Modules
+- [x] Using Code Analysis Modules
+- [x] Checklist for Printing out Violated Laws 
+- [x] Printing out the Report
+- [x] Sending an Email
+<br>
+
 - __Scanner Modules__ :
 - [x] SQL Injection (SQLi)
-- [x] Cross Site Scripting (XSS) 
+- [x] Cross-Site Scripting (XSS) 
 - [x] Directory Indexing
 - [x] Cross-Site Request Forgery (CSRF)
 <br>
@@ -36,7 +44,7 @@ Our web scanner automatically diagnoses personal information leakage vulnerabili
 
 ## 💫 ***About Our Team***:
 #### [Songha Lee](https://github.com/Lee-Song-Ha)
-- [x] Leader Of Our Team
+- [x] Team Leader
 - [x] SQLi Detection
 - [x] Directory Indexing Detection
 - [x] Configuring Report Content
@@ -51,10 +59,10 @@ Our web scanner automatically diagnoses personal information leakage vulnerabili
 - [x] WebSite Development/Design
 - [x] Code Analysis
 - [x] Mapping Vulnerabilities With Privacy Laws
-- [x] Email Transfer
+- [x] Sending an Email
 
 #### [Heeyun Heo](https://github.com/Heeyun0724)
 - [x] WebSite Development/Design
 - [x] Code Analysis
 - [x] Mapping Vulnerabilities With Privacy Laws
-- [x] Simultaneous Implementation of Scanner Funtions
+- [x] Simultaneous Implementation of Scanner Functions
