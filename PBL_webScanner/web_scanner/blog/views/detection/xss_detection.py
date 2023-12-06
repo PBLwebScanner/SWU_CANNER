@@ -53,7 +53,7 @@ def xss_detection(url, vulnerabilities, detectBool):
                 else:
                     form_action = urljoin(url, form_action)
                     
-                form_method = form.get("method").lower()
+                form_method = form.get("method")
 
                 if form_method is None:
                     form_method = "get"
@@ -88,7 +88,9 @@ def xss_detection(url, vulnerabilities, detectBool):
                                     alert = WebDriverWait(driver, 5).until(EC.alert_is_present())
                                     # Alert이 나타나면 accept()를 호출하여 OK 버튼을 클릭
                                     alert.accept()
-                                    vulnerabilities.append(url)
+                                    split_url = urlsplit(url)
+                                    no_query_url = urlunsplit((split_url.scheme, split_url.netloc, split_url.path, '', ''))
+                                    vulnerabilities.append(no_query_url)
                                     detectBool.append(url)
                                     print(f"XSS 취약점이 발견된 URL (GET 방식): {url} 주입된 페이로드: {payload}")
                                     driver.quit()
@@ -135,7 +137,9 @@ def xss_detection(url, vulnerabilities, detectBool):
 
                                     # Alert이 나타나면 accept()를 호출하여 OK 버튼을 클릭
                                     alert.accept()
-                                    vulnerabilities.append(url)
+                                    split_url = urlsplit(url)
+                                    no_query_url = urlunsplit((split_url.scheme, split_url.netloc, split_url.path, '', ''))
+                                    vulnerabilities.append(no_query_url)
                                     detectBool.append(url)
                                     print(f"XSS 취약점이 발견된 URL (POST 방식): {url} 주입된 페이로드: {payload}")
                                     driver.quit()
@@ -172,7 +176,9 @@ def xss_detection(url, vulnerabilities, detectBool):
 
                                 # Alert이 나타나면 accept()를 호출하여 OK 버튼을 클릭
                                 alert.accept()
-                                vulnerabilities.append(url)
+                                split_url = urlsplit(url)
+                                no_query_url = urlunsplit((split_url.scheme, split_url.netloc, split_url.path, '', ''))
+                                vulnerabilities.append(no_query_url)
                                 detectBool.append(url)
                                 print(f"XSS 취약점이 발견된 URL (POST 방식): {url} 주입된 페이로드: {payload}")
                                 driver.quit()

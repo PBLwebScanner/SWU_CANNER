@@ -60,9 +60,9 @@ def send_result(request):
 
     if email:
         # 이메일을 전송합니다.
-        subject = 'SWU-CANNER 보고서'
+        subject = 'SWU_CANNER 보고서'
         message = '안녕하세요. 떡잎마을 방범대입니다.\n\n\n'
-        message += 'SWU-CANNER의 결과 전송해드립니다.\n'
+        message += 'SWU_CANNER의 결과 전송해드립니다.\n'
         message += '첨부된 보고서를 확인해주세요.'
         from_email = settings.DEFAULT_FROM_EMAIL
         recipient_list = [email]
@@ -98,9 +98,9 @@ def send_result_gpt(request):
 
     if email:
         # 이메일을 전송합니다.
-        subject = 'SWU-CANNER 보고서'
+        subject = 'SWU_CANNER 보고서'
         message = '안녕하세요. 떡잎마을 방범대입니다.\n\n\n'
-        message += 'SWU-CANNER의 결과 전송해드립니다.\n'
+        message += 'SWU_CANNER의 결과 전송해드립니다.\n'
         message += '첨부된 보고서를 확인해주세요.'
         from_email = settings.DEFAULT_FROM_EMAIL
         recipient_list = [email]

@@ -5,7 +5,7 @@ from ..detection.csrf_detection import csrf_detection
 from ..detection.directory_indexing_detection import directory_indexing_detection
 from ..detection.sql_injection_detection import sql_injection_detection
 from ..detection.xss_detection import xss_detection
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
 
 #이미 검사한 url을 저장 
 visited_urls = set()
@@ -29,22 +29,32 @@ def crawl(url):
 
         links_to_visit = []
 
+        # 웹사이트의 기본 URL을 가져옵니다.
+        base_url = "{0.scheme}://{0.netloc}".format(urlsplit(url))
+
         for anchor in soup.find_all("a", href=True):
             href = anchor.get("href")
-            result = urljoin(url, href)
-            if result and result.startswith(url):
+            result = urljoin(base_url, href)
+            if result and result.startswith(base_url):
                 links_to_visit.append(result)
+
+        # div 태그 중 class가 story인 태그 안의 a 태그를 찾는 코드 추가
+        for div in soup.find_all("div", class_="story"):
+            for anchor in div.find_all("a", href=True):
+                href = anchor.get("href")
+                result = urljoin(base_url, href)
+                if result and result.startswith(base_url):
+                    links_to_visit.append(result)
 
         for element in soup.find_all(lambda tag: tag.has_attr('onclick')):
             onclick_value = element['onclick']
             if 'window.open(' in onclick_value:
                 window_open_url = onclick_value.split("'")[1]
-                # if window_open_url not in visited_urls:
-                links_to_visit.append(urljoin(url, window_open_url))
+                links_to_visit.append(urljoin(base_url, window_open_url))
         
         visited_urls.update(links_to_visit)
 
-        for url in visited_urls:  # visited_urls 대신 links_to_visit를 순회
+        for url in visited_urls:  
             print(f"Checking URL: {url}")
 
     except Exception as e:
